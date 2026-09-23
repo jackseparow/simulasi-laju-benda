@@ -112,7 +112,7 @@
     const staminaText = document.getElementById('staminaText');
 
     // Parameter Simulasi
-    let progress = 0;           // Posisi sepanjang lintasan (0.0 sampai 1.0)
+    let progress = 0;           // Posisi sepanjang lintasan (0.0 di KANAN sampai 1.0 di KIRI)
     let totalDistanceKm = 0;    // Jarak aktual yang telah ditempuh (km)
     let currentSpeed = 1;       // Pengali kecepatan saat ini
     let stamina = 100;          // Persentase stamina/bahan bakar (100% -> 0%)
@@ -121,10 +121,12 @@
     let animFrameId = null;
     let animStep = 0;           // Variabel fase animasi (langkah kaki / putaran)
 
-    // Menghasilkan koordinat jalur bergelombang dari kiri ke kanan
+    // Menghasilkan koordinat jalur bergelombang DARI KANAN KE KIRI
     function getPathPoint(t, offsetX = 0) {
-      const x = t * canvas.width;
-      const y = 200 + Math.sin((t * 4 * Math.PI) + offsetX) * 60 + Math.cos(t * 2 * Math.PI) * 30;
+      // t = 0 -> Ujung Kanan (X = canvas.width)
+      // t = 1 -> Ujung Kiri (X = 0)
+      const x = (1 - t) * canvas.width;
+      const y = 200 + Math.sin(((1 - t) * 4 * Math.PI) + offsetX) * 60 + Math.cos((1 - t) * 2 * Math.PI) * 30;
       return { x, y };
     }
 
@@ -163,8 +165,11 @@
       ctx.save();
       ctx.translate(x, y);
       
-      // ROTASI: Rotasi disesuaikan agar objek MENGHADAP KANAN secara alami
+      // ROTASI: Sesuaikan sudut dengan rotasi canvas
       ctx.rotate(angle);
+      
+      // BALIK HORIZONTAL: Mengubah orientasi bawaan dari kanan ke kiri
+      ctx.scale(-1, 1);
 
       // Gambar Objek Berdasarkan Pilihan
       if (type === 'kuda') {
@@ -295,7 +300,7 @@
       stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100)); // Minimum stamina 5%
       currentSpeed = stamina / 100; // Kecepatan proporsional dengan stamina
 
-      // 2. Laju Pergerakan (Kiri ke Kanan)
+      // 2. Laju Pergerakan (Kanan ke Kiri)
       const baseIncrement = 0.002 * currentSpeed;
       
       // Update langkah/fase animasi hanya saat bergerak
@@ -311,11 +316,15 @@
         progress += baseIncrement;
         totalDistanceKm = progress * maxDistance;
 
-        // Cek jika sudah mencapai garis finish
+        // Cek jika sudah mencapai garis finish di sebelah kiri
         if (progress >= 1.0) {
           progress = 1.0;
           isRunning = false;
-          alert(`Selamat! Objek telah menyelesaikan lintasan sejauh ${maxDistance} km.`);
+          render();
+          setTimeout(() => {
+            alert(`Selamat! Objek telah menyelesaikan lintasan sejauh ${maxDistance} km.`);
+          }, 50);
+          return;
         }
       }
 
@@ -338,14 +347,14 @@
       // Gambar Lintasan
       drawTrack(infiniteOffset);
 
-      // Hitung Posisi Objek & Derivatif Vektor Arah (Sudut Kemiringan Jalur)
+      // Hitung Posisi Objek & Vektor Arah Gerak (Kanan ke Kiri)
       const pt1 = getPathPoint(progress, infiniteOffset);
-      const pt2 = getPathPoint(progress + 0.01, infiniteOffset); // Titik sedikit di depan
+      const pt2 = getPathPoint(progress + 0.01, infiniteOffset); // Titik sedikit di depan (ke arah kiri)
 
-      // Menghitung Sudut (Angle) dari Kiri ke Kanan
+      // Menghitung Sudut (Angle) Pergerakan dari Kanan ke Kiri
       const dx = pt2.x - pt1.x;
       const dy = pt2.y - pt1.y;
-      const angle = Math.atan2(dy, dx); // Sudut otomatis mengarah ke depan jalur
+      const angle = Math.atan2(dy, dx); 
 
       // Gambar Objek di Atas Lintasan
       drawObject(pt1.x, pt1.y, angle, objectSelect.value);
