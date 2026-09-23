@@ -93,7 +93,7 @@
   <div id="canvas-container">
     <canvas id="simCanvas" width="800" height="400"></canvas>
     <div id="stats">
-      Jarak Jtempuh: <span id="distText">0.00</span> km<br>
+      Jarak Tempuh: <span id="distText">0.00</span> km<br>
       Kecepatan: <span id="speedText">100</span>%<br>
       Stamina/Bahan Bakar: <span id="staminaText">100</span>%
     </div>
@@ -119,12 +119,11 @@
     let maxDistance = Infinity; // Batas lintasan (km)
     let isRunning = false;
     let animFrameId = null;
+    let animStep = 0;           // Variabel fase animasi (langkah kaki / putaran)
 
     // Menghasilkan koordinat jalur bergelombang dari kiri ke kanan
     function getPathPoint(t, offsetX = 0) {
-      // t bernilai 0 (kiri canvas) hingga 1 (kanan canvas)
       const x = t * canvas.width;
-      // Kurva Gelombang sinus untuk lintasan
       const y = 200 + Math.sin((t * 4 * Math.PI) + offsetX) * 60 + Math.cos(t * 2 * Math.PI) * 30;
       return { x, y };
     }
@@ -169,44 +168,115 @@
 
       // Gambar Objek Berdasarkan Pilihan
       if (type === 'kuda') {
-        // Hewan (Kuda Sederhana) -> Menghadap ke Kanan (Arah X Positif)
+        // Ayunan kaki kuda berlawanan arah (gelombang sinus)
+        const legSwing = Math.sin(animStep * 10) * 12;
+        const headBob = Math.cos(animStep * 10) * 3;
+
+        // Badan Kuda
         ctx.fillStyle = '#6d4c41';
-        ctx.fillRect(-20, -10, 35, 18); // Badan
-        ctx.fillRect(10, -20, 10, 15);  // Leher
-        ctx.fillRect(12, -25, 12, 8);   // Kepala
-        // Kaki-kaki
+        ctx.fillRect(-20, -10, 35, 18);
+        
+        // Leher & Kepala (dengan animasi gerakan memanggut/head bobbing)
+        ctx.fillRect(10, -20 + headBob, 10, 15);
+        ctx.fillRect(12, -25 + headBob, 12, 8);
+
+        // Kaki-kaki beranimasi
         ctx.fillStyle = '#3e2723';
-        ctx.fillRect(-15, 8, 5, 12);
-        ctx.fillRect(-5, 8, 5, 12);
-        ctx.fillRect(5, 8, 5, 12);
-        ctx.fillRect(12, 8, 5, 12);
+        // Kaki Belakang 1 & 2
+        ctx.fillRect(-15 + legSwing * 0.5, 8, 5, 12);
+        ctx.fillRect(-8 - legSwing * 0.5, 8, 5, 12);
+        // Kaki Depan 1 & 2
+        ctx.fillRect(2 - legSwing * 0.5, 8, 5, 12);
+        ctx.fillRect(9 + legSwing * 0.5, 8, 5, 12);
+
         // Mata
         ctx.fillStyle = '#fff';
-        ctx.fillRect(20, -23, 3, 3);
+        ctx.fillRect(20, -23 + headBob, 3, 3);
+
       } else if (type === 'manusia') {
-        // Pelari -> Menghadap ke Kanan
+        // Ayunan kaki dan tangan pelari
+        const swing = Math.sin(animStep * 12) * 14;
+
+        // Kepala
         ctx.fillStyle = '#e0a96d';
-        ctx.beginPath(); ctx.arc(5, -22, 6, 0, Math.PI * 2); ctx.fill(); // Kepala
+        ctx.beginPath(); 
+        ctx.arc(0, -24, 6, 0, Math.PI * 2); 
+        ctx.fill();
+
+        // Badan
         ctx.fillStyle = '#007bff';
-        ctx.fillRect(-5, -16, 12, 16); // Badan
-        // Tangan & Kaki
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
+        ctx.fillRect(-5, -18, 10, 16);
+
+        // Kaki Beranimasi
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = 'round';
+
+        // Kaki Belakang
         ctx.beginPath();
-        ctx.moveTo(-2, 0); ctx.lineTo(-10, 12); // Kaki Belakang
-        ctx.moveTo(3, 0); ctx.lineTo(10, 12);   // Kaki Depan
+        ctx.moveTo(-2, -2);
+        ctx.lineTo(-2 - swing, 12);
         ctx.stroke();
+
+        // Kaki Depan
+        ctx.beginPath();
+        ctx.moveTo(2, -2);
+        ctx.lineTo(2 + swing, 12);
+        ctx.stroke();
+
+        // Tangan Beranimasi (Mengayun berlawanan dari arah kaki)
+        ctx.strokeStyle = '#e0a96d';
+        ctx.lineWidth = 2.5;
+
+        // Tangan Kiri
+        ctx.beginPath();
+        ctx.moveTo(-3, -14);
+        ctx.lineTo(-3 + swing * 0.8, -4);
+        ctx.stroke();
+
+        // Tangan Kanan
+        ctx.beginPath();
+        ctx.moveTo(3, -14);
+        ctx.lineTo(3 - swing * 0.8, -4);
+        ctx.stroke();
+
       } else if (type === 'mobil') {
-        // Kendaraan -> Menghadap ke Kanan
+        // Sudut rotasi garis roda untuk indikator roda berputar
+        const wheelAngle = animStep * 15;
+
+        // Bodi Mobil
         ctx.fillStyle = '#d32f2f';
         ctx.fillRect(-22, -12, 44, 16); // Bodi bawah
         ctx.fillStyle = '#b71c1c';
         ctx.fillRect(-10, -22, 24, 10); // Bodi atas/Atap
-        // Roda
-        ctx.fillStyle = '#212121';
-        ctx.beginPath(); ctx.arc(-12, 5, 6, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(12, 5, 6, 0, Math.PI * 2); ctx.fill();
-        // Lampu Depan (Kanan)
+
+        // Roda Berputar
+        const drawWheel = (wx, wy) => {
+          ctx.save();
+          ctx.translate(wx, wy);
+          ctx.rotate(wheelAngle);
+          
+          // Ban
+          ctx.fillStyle = '#212121';
+          ctx.beginPath(); 
+          ctx.arc(0, 0, 6, 0, Math.PI * 2); 
+          ctx.fill();
+
+          // Velg / Jari-jari roda
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-5, 0); ctx.lineTo(5, 0);
+          ctx.moveTo(0, -5); ctx.lineTo(0, 5);
+          ctx.stroke();
+
+          ctx.restore();
+        };
+
+        drawWheel(-12, 5); // Roda Belakang
+        drawWheel(12, 5);  // Roda Depan
+
+        // Lampu Depan
         ctx.fillStyle = '#ffeb3b';
         ctx.fillRect(20, -8, 3, 5);
       }
@@ -221,7 +291,6 @@
       if (!isRunning) return;
 
       // 1. Kalkulasi Faktor Daya Tahan / Melambat
-      // Setiap km berjalan, stamina berkurang
       const decayRate = objectSelect.value === 'manusia' ? 0.08 : (objectSelect.value === 'kuda' ? 0.05 : 0.03);
       stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100)); // Minimum stamina 5%
       currentSpeed = stamina / 100; // Kecepatan proporsional dengan stamina
@@ -229,6 +298,9 @@
       // 2. Laju Pergerakan (Kiri ke Kanan)
       const baseIncrement = 0.002 * currentSpeed;
       
+      // Update langkah/fase animasi hanya saat bergerak
+      animStep += baseIncrement * 10;
+
       if (maxDistance === Infinity) {
         // MODE TAK BERBATAS: Objek tetap di tengah lintasan, lintasan bergeser maju
         totalDistanceKm += baseIncrement * 5;
@@ -291,6 +363,7 @@
       stamina = 100;
       currentSpeed = 1;
       infiniteOffset = 0;
+      animStep = 0;
       isRunning = true;
 
       update();
