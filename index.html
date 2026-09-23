@@ -112,17 +112,19 @@
     const staminaText = document.getElementById('staminaText');
 
     // Parameter Simulasi
-    let progress = 0;           // Posisi sepanjang lintasan (0.0 = Kanan, 1.0 = Kiri)
+    let progress = 0;           // Progress gerak (0.0 = Titik Awal/Kanan, 1.0 = Titik Akhir/Kiri)
     let totalDistanceKm = 0;    // Jarak aktual yang telah ditempuh (km)
     let currentSpeed = 1;       // Pengali kecepatan saat ini
     let stamina = 100;          // Persentase stamina/bahan bakar (100% -> 0%)
     let maxDistance = Infinity; // Batas lintasan (km)
     let isRunning = false;
     let animFrameId = null;
-    let animStep = 0;           // Variabel fase animasi (langkah kaki / putaran)
+    let animStep = 0;           // Langkah kaki / animasi
 
-    // Menghasilkan koordinat jalur bergelombang DARI KANAN (t=0) KE KIRI (t=1)
+    // Fungsi Posisi Lintasan Presisi (0.0 sampai 1.0 Menyapu Tepi ke Tepi Canvas)
     function getPathPoint(t, offsetX = 0) {
+      // t = 0 -> X = 800 (Tepi Kanan)
+      // t = 1 -> X = 0 (Tepi Kiri)
       const x = (1 - t) * canvas.width;
       const y = 200 + Math.sin(((1 - t) * 4 * Math.PI) + offsetX) * 60 + Math.cos((1 - t) * 2 * Math.PI) * 30;
       return { x, y };
@@ -132,81 +134,68 @@
     function drawTrack(offsetX) {
       ctx.beginPath();
       ctx.lineWidth = 12;
-      ctx.strokeStyle = '#8d6e63'; // Warna jalan tanah/lintasan
+      ctx.strokeStyle = '#8d6e63';
       ctx.lineCap = 'round';
 
-      for (let i = 0; i <= 100; i++) {
-        const t = i / 100;
+      for (let i = 0; i <= 200; i++) {
+        const t = i / 200;
         const pt = getPathPoint(t, offsetX);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
 
-      // Garis tengah lintasan (putus-putus)
+      // Garis Tengah Putus-putus
       ctx.beginPath();
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#fff';
       ctx.setLineDash([8, 8]);
-      for (let i = 0; i <= 100; i++) {
-        const t = i / 100;
+      for (let i = 0; i <= 200; i++) {
+        const t = i / 200;
         const pt = getPathPoint(t, offsetX);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
-      ctx.setLineDash([]); // Reset garis
+      ctx.setLineDash([]);
     }
 
-    // Menggambar Objek/Hewan/Kendaraan
+    // Menggambar Objek
     function drawObject(x, y, angle, type) {
       ctx.save();
       ctx.translate(x, y);
-      
-      // ROTASI: Mensejajarkan objek dengan sudut jalan
       ctx.rotate(angle);
+      ctx.scale(-1, 1); // Orientasi menghadap arah gerak
 
-      // BALIK DERAJAT: Membalik orientasi horizontal gambar asli agar MENGHADAP KE KIRI
-      ctx.scale(-1, 1);
-
-      // Gambar Objek Berdasarkan Pilihan
       if (type === 'kuda') {
         const legSwing = Math.sin(animStep * 10) * 12;
         const headBob = Math.cos(animStep * 10) * 3;
 
-        // Badan Kuda
         ctx.fillStyle = '#6d4c41';
         ctx.fillRect(-20, -10, 35, 18);
-        
-        // Leher & Kepala
         ctx.fillRect(10, -20 + headBob, 10, 15);
         ctx.fillRect(12, -25 + headBob, 12, 8);
 
-        // Kaki-kaki beranimasi
         ctx.fillStyle = '#3e2723';
         ctx.fillRect(-15 + legSwing * 0.5, 8, 5, 12);
         ctx.fillRect(-8 - legSwing * 0.5, 8, 5, 12);
         ctx.fillRect(2 - legSwing * 0.5, 8, 5, 12);
         ctx.fillRect(9 + legSwing * 0.5, 8, 5, 12);
 
-        // Mata
         ctx.fillStyle = '#fff';
         ctx.fillRect(20, -23 + headBob, 3, 3);
 
       } else if (type === 'manusia') {
         const swing = Math.sin(animStep * 12) * 14;
 
-        // Kepala
         ctx.fillStyle = '#e0a96d';
         ctx.beginPath(); 
         ctx.arc(0, -24, 6, 0, Math.PI * 2); 
         ctx.fill();
 
-        // Badan
         ctx.fillStyle = '#007bff';
         ctx.fillRect(-5, -18, 10, 16);
 
-        // Kaki Beranimasi
         ctx.strokeStyle = '#222';
         ctx.lineWidth = 3.5;
         ctx.lineCap = 'round';
@@ -221,7 +210,6 @@
         ctx.lineTo(2 + swing, 12);
         ctx.stroke();
 
-        // Tangan Beranimasi
         ctx.strokeStyle = '#e0a96d';
         ctx.lineWidth = 2.5;
 
@@ -238,13 +226,11 @@
       } else if (type === 'mobil') {
         const wheelAngle = animStep * 15;
 
-        // Bodi Mobil
         ctx.fillStyle = '#d32f2f';
         ctx.fillRect(-22, -12, 44, 16);
         ctx.fillStyle = '#b71c1c';
         ctx.fillRect(-10, -22, 24, 10);
 
-        // Roda Berputar
         const drawWheel = (wx, wy) => {
           ctx.save();
           ctx.translate(wx, wy);
@@ -268,7 +254,6 @@
         drawWheel(-12, 5);
         drawWheel(12, 5);
 
-        // Lampu Depan
         ctx.fillStyle = '#ffeb3b';
         ctx.fillRect(20, -8, 3, 5);
       }
@@ -276,49 +261,45 @@
       ctx.restore();
     }
 
-    // Program Utama (Update & Render Loop)
     let infiniteOffset = 0;
 
+    // Loop Utama Update
     function update() {
       if (!isRunning) return;
 
-      // 1. Kalkulasi Faktor Daya Tahan / Melambat
       const decayRate = objectSelect.value === 'manusia' ? 0.08 : (objectSelect.value === 'kuda' ? 0.05 : 0.03);
       stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100)); 
       currentSpeed = stamina / 100; 
 
-      // 2. Laju Pergerakan (Kanan ke Kiri)
-      const baseIncrement = 0.002 * currentSpeed;
+      const baseIncrement = 0.0025 * currentSpeed;
       animStep += baseIncrement * 10;
 
       if (maxDistance === Infinity) {
-        // MODE TAK BERBATAS: Lintasan bergeser maju
+        // Mode Tanpa Batas
         totalDistanceKm += baseIncrement * 5;
-        infiniteOffset -= baseIncrement * 4; // Bergeser ke arah lawan
-        progress = 0.5; // Tetap di tengah
+        infiniteOffset -= baseIncrement * 4; 
+        progress = 0.5;
       } else {
-        // MODE LINTASAN TERBATAS (1, 5, 10 km)
+        // Mode Terbatas (1 km, 5 km, 10 km)
         progress += baseIncrement;
         totalDistanceKm = progress * maxDistance;
 
-        // Cek jika sudah mencapai ujung paling kiri (Finish)
+        // CEK HINGGA LINTASAN HABIS TOTAL (progress >= 1.0)
         if (progress >= 1.0) {
           progress = 1.0;
           isRunning = false;
           render();
           setTimeout(() => {
-            alert(`Selamat! Objek telah menyelesaikan lintasan sejauh ${maxDistance} km.`);
+            alert(`Selamat! Objek telah menyelesaikan seluruh lintasan sejauh ${maxDistance} km.`);
           }, 50);
           return;
         }
       }
 
-      // Update Panel Informasi
       distText.innerText = totalDistanceKm.toFixed(2);
       speedText.innerText = Math.round(currentSpeed * 100);
       staminaText.innerText = Math.round(stamina);
 
-      // Render Visual
       render();
 
       if (isRunning) {
@@ -329,32 +310,25 @@
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Gambar Lintasan
       drawTrack(infiniteOffset);
 
-      // Hitung Posisi Objek & Vektor Tangen Sudut Kemiringan Jalur
       const pt1 = getPathPoint(progress, infiniteOffset);
-      const pt2 = getPathPoint(progress + 0.01, infiniteOffset);
+      const pt2 = getPathPoint(Math.min(1.0, progress + 0.005), infiniteOffset);
 
-      // Menghitung Sudut Kemiringan Gerak dari Kanan ke Kiri
       const dx = pt2.x - pt1.x;
       const dy = pt2.y - pt1.y;
-      
-      // Mengabaikan pembalikan arah sumbu X untuk rotasi yang mulus
       const angle = Math.atan2(dy, -dx); 
 
-      // Gambar Objek di Atas Lintasan
       drawObject(pt1.x, pt1.y, angle, objectSelect.value);
     }
 
-    // Reset Simulasi
     function resetSimulation() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
       
       const selectedTrack = trackSelect.value;
       maxDistance = selectedTrack === 'infinite' ? Infinity : parseFloat(selectedTrack);
       
-      progress = maxDistance === Infinity ? 0.5 : 0;
+      progress = maxDistance === Infinity ? 0.5 : 0; // Mulai tepat di titik awal 0
       totalDistanceKm = 0;
       stamina = 100;
       currentSpeed = 1;
@@ -367,7 +341,6 @@
 
     btnStart.addEventListener('click', resetSimulation);
 
-    // Render Awal saat Halaman Dibuka
     render();
   </script>
 </body>
