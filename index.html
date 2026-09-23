@@ -1,587 +1,305 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulasi Laju Benda - Taman Numerasi</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        /* Membalikkan orientasi horizontal emoji agar menghadap dan bergerak maju ke kanan */
-        .flip-facing-right {
-            display: inline-block;
-            transform: scaleX(-1);
-        }
-        
-        /* Animasi lintasan bergerak untuk mode tak terbatas */
-        .infinite-track {
-            background-image: repeating-linear-gradient(90deg, #334155 0px, #334155 20px, #1e293b 20px, #1e293b 40px);
-            background-size: 40px 100%;
-            animation: moveTrack 0.5s linear infinite;
-        }
-        
-        @keyframes moveTrack {
-            0% { background-position: 0 0; }
-            100% { background-position: -40px 0; }
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #2563eb;
-            border-radius: 4px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi Pergerakan Lintasan</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    #controls {
+      background: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    label {
+      font-weight: bold;
+      color: #333;
+    }
+    select, button {
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #canvas-container {
+      position: relative;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #eef9bf;
+    }
+    canvas {
+      display: block;
+    }
+    #stats {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #222;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+<body>
 
-    <!-- Header Banner -->
-    <header class="bg-blue-900 text-white shadow-lg sticky top-0 z-50 border-b-4 border-amber-400">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
-            
-            <!-- Sisi Kiri: Logo BBGTK DIY -->
-            <div class="flex items-center gap-3 shrink-0">
-                <img src="bbgtk diy logo.png" 
-                     alt="Logo BBGTK DIY" 
-                     class="h-12 md:h-16 w-auto object-contain drop-shadow bg-white/10 p-1 rounded"
-                     onerror="this.onerror=null; this.src='https://placehold.co/120x60/2563eb/ffffff?text=BBGTK+DIY';">
-            </div>
+  <div id="controls">
+    <label for="trackSelect">Pilih Lintasan:</label>
+    <select id="trackSelect">
+      <option value="1">1 km</option>
+      <option value="5">5 km</option>
+      <option value="10">10 km</option>
+      <option value="infinite" selected>Tak Berbatas (Infinite)</option>
+    </select>
 
-            <!-- Bagian Tengah: Judul & Subtitle -->
-            <div class="text-center flex-1 my-auto">
-                <div class="flex items-center justify-center gap-2">
-                    <span class="bg-amber-400 text-slate-900 text-xs font-black px-2 py-0.5 rounded tracking-wide uppercase">Taman Numerasi</span>
-                    <h1 class="text-xl md:text-3xl font-black tracking-wide text-amber-300 drop-shadow">SIMULASI LAJU BENDA</h1>
-                </div>
-                <p class="text-xs md:text-sm text-blue-100 font-medium hidden sm:block mt-0.5">
-                    Eksplorasi & Perbandingan Impresi Kecepatan Benda, Kendaraan, dan Hewan
-                </p>
-            </div>
+    <label for="objectSelect">Pilih Objek:</label>
+    <select id="objectSelect">
+      <option value="kuda">Kuda (Hewan)</option>
+      <option value="manusia">Pelari (Manusia)</option>
+      <option value="mobil">Mobil (Kendaraan)</option>
+    </select>
 
-            <!-- Sisi Kanan: Maskot Si Yo -->
-            <div class="flex flex-col items-center justify-center shrink-0 bg-blue-950/60 p-1.5 rounded-lg border border-blue-700/50">
-                <img src="maskot-siyo.png" 
-                     alt="Maskot Si Yo" 
-                     class="h-10 md:h-14 w-auto object-contain drop-shadow"
-                     onerror="this.onerror=null; this.src='https://placehold.co/80x80/f59e0b/ffffff?text=Si+Yo';">
-                <span class="text-xs font-bold text-amber-300 leading-none mt-1">Si Yo</span>
-            </div>
+    <button id="btnStart">Mulai / Reset</button>
+  </div>
 
-        </div>
-    </header>
+  <div id="canvas-container">
+    <canvas id="simCanvas" width="800" height="400"></canvas>
+    <div id="stats">
+      Jarak Jtempuh: <span id="distText">0.00</span> km<br>
+      Kecepatan: <span id="speedText">100</span>%<br>
+      Stamina/Bahan Bakar: <span id="staminaText">100</span>%
+    </div>
+  </div>
 
-    <!-- Main Container Layout -->
-    <main class="max-w-7xl mx-auto px-4 py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
 
-        <!-- KIRI: Pilihan Objek & Kalkulator Rute Kota (5 Kolom) -->
-        <section class="lg:col-span-5 flex flex-col gap-4">
+    // Element Kontrol & Status
+    const trackSelect = document.getElementById('trackSelect');
+    const objectSelect = document.getElementById('objectSelect');
+    const btnStart = document.getElementById('btnStart');
+    const distText = document.getElementById('distText');
+    const speedText = document.getElementById('speedText');
+    const staminaText = document.getElementById('staminaText');
 
-            <!-- Panel 1: Pilih Benda & Hewan -->
-            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200">
-                <div class="flex justify-between items-center border-b pb-2 mb-3">
-                    <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
-                        <i data-lucide="check-square" class="text-blue-600 w-5 h-5"></i>
-                        Pilih Objek Perbandingan
-                    </h2>
-                    <span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold" id="selected-count">0 Terpilih</span>
-                </div>
+    // Parameter Simulasi
+    let progress = 0;           // Posisi sepanjang lintasan (0.0 sampai 1.0)
+    let totalDistanceKm = 0;    // Jarak aktual yang telah ditempuh (km)
+    let currentSpeed = 1;       // Pengali kecepatan saat ini
+    let stamina = 100;          // Persentase stamina/bahan bakar (100% -> 0%)
+    let maxDistance = Infinity; // Batas lintasan (km)
+    let isRunning = false;
+    let animFrameId = null;
 
-                <div class="grid grid-cols-1 gap-2 max-h-[340px] overflow-y-auto pr-1" id="object-selector-container">
-                    <!-- Dynamic Object Items Rendered by JS -->
-                </div>
-            </div>
+    // Menghasilkan koordinat jalur bergelombang dari kiri ke kanan
+    function getPathPoint(t, offsetX = 0) {
+      // t bernilai 0 (kiri canvas) hingga 1 (kanan canvas)
+      const x = t * canvas.width;
+      // Kurva Gelombang sinus untuk lintasan
+      const y = 200 + Math.sin((t * 4 * Math.PI) + offsetX) * 60 + Math.cos(t * 2 * Math.PI) * 30;
+      return { x, y };
+    }
 
-            <!-- Panel 2: Kalkulator Estimasi Rute Antarkota di Pulau Jawa -->
-            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200">
-                <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2 border-b pb-2 mb-3">
-                    <i data-lucide="map-pin" class="text-amber-600 w-5 h-5"></i>
-                    Estimasi Waktu Tempuh Rute Jawa
-                </h2>
+    // Menggambar Lintasan
+    function drawTrack(offsetX) {
+      ctx.beginPath();
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#8d6e63'; // Warna jalan tanah/lintasan
+      ctx.lineCap = 'round';
 
-                <div class="space-y-3 text-xs">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Pilih Rute Antarkota:</label>
-                        <select id="route-select" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="65">Yogyakarta - Solo (65 km)</option>
-                            <option value="115">Yogyakarta - Semarang (115 km)</option>
-                            <option value="150">Jakarta - Bandung (150 km)</option>
-                            <option value="320">Surabaya - Malang / Banyuwangi (320 km)</option>
-                            <option value="450">Semarang - Surabaya (450 km)</option>
-                            <option value="560">Yogyakarta - Jakarta (560 km)</option>
-                            <option value="780">Jakarta - Surabaya (780 km)</option>
-                        </select>
-                    </div>
+      for (let i = 0; i <= 100; i++) {
+        const t = i / 100;
+        const pt = getPathPoint(t, offsetX);
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
 
-                    <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-                        <div class="font-bold text-amber-900 flex justify-between items-center mb-1">
-                            <span>Jarak Lintasan Rute:</span>
-                            <span id="route-distance-text" class="text-sm font-black">65 km</span>
-                        </div>
-                    </div>
+      // Garis tengah lintasan (putus-putus)
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#fff';
+      ctx.setLineDash([8, 8]);
+      for (let i = 0; i <= 100; i++) {
+        const t = i / 100;
+        const pt = getPathPoint(t, offsetX);
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset garis
+    }
 
-                    <!-- Ringkasan Waktu Tempuh Objek Terpilih -->
-                    <div class="space-y-1.5 max-h-[140px] overflow-y-auto pr-1 border-t pt-2" id="travel-time-results">
-                        <!-- Rendered by JS -->
-                    </div>
-                </div>
-            </div>
+    // Menggambar Objek/Hewan/Kendaraan
+    function drawObject(x, y, angle, type) {
+      ctx.save();
+      ctx.translate(x, y);
+      
+      // ROTASI: Rotasi disesuaikan agar objek MENGHADAP KANAN secara alami
+      ctx.rotate(angle);
 
-        </section>
+      // Gambar Objek Berdasarkan Pilihan
+      if (type === 'kuda') {
+        // Hewan (Kuda Sederhana) -> Menghadap ke Kanan (Arah X Positif)
+        ctx.fillStyle = '#6d4c41';
+        ctx.fillRect(-20, -10, 35, 18); // Badan
+        ctx.fillRect(10, -20, 10, 15);  // Leher
+        ctx.fillRect(12, -25, 12, 8);   // Kepala
+        // Kaki-kaki
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(-15, 8, 5, 12);
+        ctx.fillRect(-5, 8, 5, 12);
+        ctx.fillRect(5, 8, 5, 12);
+        ctx.fillRect(12, 8, 5, 12);
+        // Mata
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(20, -23, 3, 3);
+      } else if (type === 'manusia') {
+        // Pelari -> Menghadap ke Kanan
+        ctx.fillStyle = '#e0a96d';
+        ctx.beginPath(); ctx.arc(5, -22, 6, 0, Math.PI * 2); ctx.fill(); // Kepala
+        ctx.fillStyle = '#007bff';
+        ctx.fillRect(-5, -16, 12, 16); // Badan
+        // Tangan & Kaki
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-2, 0); ctx.lineTo(-10, 12); // Kaki Belakang
+        ctx.moveTo(3, 0); ctx.lineTo(10, 12);   // Kaki Depan
+        ctx.stroke();
+      } else if (type === 'mobil') {
+        // Kendaraan -> Menghadap ke Kanan
+        ctx.fillStyle = '#d32f2f';
+        ctx.fillRect(-22, -12, 44, 16); // Bodi bawah
+        ctx.fillStyle = '#b71c1c';
+        ctx.fillRect(-10, -22, 24, 10); // Bodi atas/Atap
+        // Roda
+        ctx.fillStyle = '#212121';
+        ctx.beginPath(); ctx.arc(-12, 5, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(12, 5, 6, 0, Math.PI * 2); ctx.fill();
+        // Lampu Depan (Kanan)
+        ctx.fillStyle = '#ffeb3b';
+        ctx.fillRect(20, -8, 3, 5);
+      }
 
-        <!-- KANAN: Lintasan Balap & Visualisasi Kecepatan (7 Kolom) -->
-        <section class="lg:col-span-7 flex flex-col gap-4">
+      ctx.restore();
+    }
 
-            <!-- Kontrol Utama Balapan & Opsi Pengaturan Lintasan -->
-            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 flex flex-col gap-3">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <button id="btn-start" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
-                            <i data-lucide="play" class="w-4 h-4"></i> Mulai
-                        </button>
-                        <button id="btn-pause" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
-                            <i data-lucide="pause" class="w-4 h-4"></i> Jeda
-                        </button>
-                        <button id="btn-reset" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs md:text-sm rounded-lg transition">
-                            Reset
-                        </button>
-                    </div>
+    // Program Utama (Update & Render Loop)
+    let infiniteOffset = 0;
 
-                    <!-- Opsi Mode Skala Visual -->
-                    <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border text-xs">
-                        <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-relative">
-                            <input type="radio" name="scale-mode" value="relative" checked class="hidden"> Mode Visual
-                        </label>
-                        <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-real">
-                            <input type="radio" name="scale-mode" value="real" class="hidden"> Skala Nyata
-                        </label>
-                    </div>
-                </div>
+    function update() {
+      if (!isRunning) return;
 
-                <!-- Pengaturan Jarak Lintasan Balap -->
-                <div class="flex items-center justify-between border-t pt-2.5 text-xs">
-                    <span class="font-bold text-slate-700 flex items-center gap-1">
-                        <i data-lucide="ruler" class="w-4 h-4 text-blue-600"></i> Jarak Lintasan Balap:
-                    </span>
-                    <select id="track-length-select" class="bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 font-bold text-slate-800 outline-none">
-                        <option value="1000">1 Kilometer (1.000 m)</option>
-                        <option value="5000">5 Kilometer (5.000 m)</option>
-                        <option value="10000">10 Kilometer (10.000 m)</option>
-                        <option value="infinite">Tak Berbatas (Endless Run)</option>
-                    </select>
-                </div>
-            </div>
+      // 1. Kalkulasi Faktor Daya Tahan / Melambat
+      // Setiap km berjalan, stamina berkurang
+      const decayRate = objectSelect.value === 'manusia' ? 0.08 : (objectSelect.value === 'kuda' ? 0.05 : 0.03);
+      stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100)); // Minimum stamina 5%
+      currentSpeed = stamina / 100; // Kecepatan proporsional dengan stamina
 
-            <!-- Area Arena Lintasan Balap Vertikal -->
-            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 flex-1 flex flex-col">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
-                        <i data-lucide="flag" class="text-emerald-600 w-5 h-5"></i>
-                        Arena Lintasan Balap
-                    </h2>
-                    <span class="text-xs font-mono font-bold bg-slate-800 text-emerald-400 px-2.5 py-1 rounded" id="timer-display">
-                        Waktu: 00:00.0s
-                    </span>
-                </div>
+      // 2. Laju Pergerakan (Kiri ke Kanan)
+      const baseIncrement = 0.002 * currentSpeed;
+      
+      if (maxDistance === Infinity) {
+        // MODE TAK BERBATAS: Objek tetap di tengah lintasan, lintasan bergeser maju
+        totalDistanceKm += baseIncrement * 5;
+        infiniteOffset += baseIncrement * 4; 
+        progress = 0.5; // Tetap di tengah layar
+      } else {
+        // MODE LINTASAN TERBATAS (1, 5, 10 km)
+        progress += baseIncrement;
+        totalDistanceKm = progress * maxDistance;
 
-                <!-- Track Canvas Container -->
-                <div class="bg-slate-900 rounded-xl p-3 border-2 border-slate-800 flex-1 flex flex-col gap-3 min-h-[420px] relative overflow-hidden" id="race-tracks-container">
-                    <!-- Dynamic Race Lanes Rendered by JS -->
-                </div>
-
-                <div class="mt-3 text-[11px] text-slate-500 flex justify-between items-center px-1">
-                    <span>Mulai (0 km)</span>
-                    <span class="font-semibold text-slate-600" id="track-info-footer">Lintasan 1 Km dengan Faktor Kelelahan / Bensin</span>
-                    <span id="track-finish-label">Garis Finish (1 km)</span>
-                </div>
-            </div>
-
-        </section>
-
-    </main>
-
-    <!-- SCRIPT LOGIKA SIMULASI KECEPATAN -->
-    <script>
-        // Master Data Objek & Kecepatan (km/jam) serta Kapasitas Daya Tahan
-        const SPEED_DATA = [
-            { id: 'manusia', name: 'Manusia', icon: '🚶', walkSpeed: 5, runSpeed: 20, hasModes: true, mode: 'walk', type: 'living', staminaMax: 10 },
-            { id: 'anjing', name: 'Anjing', icon: '🐕', walkSpeed: 4, runSpeed: 45, hasModes: true, mode: 'run', type: 'living', staminaMax: 8 },
-            { id: 'kucing', name: 'Kucing', icon: '🐈', walkSpeed: 3, runSpeed: 48, hasModes: true, mode: 'run', type: 'living', staminaMax: 5 },
-            { id: 'kuda', name: 'Kuda', icon: '🐎', walkSpeed: 6, runSpeed: 70, hasModes: true, mode: 'run', type: 'living', staminaMax: 25 },
-            { id: 'cheetah', name: 'Cheetah', icon: '🐆', walkSpeed: 7, runSpeed: 120, hasModes: true, mode: 'run', type: 'living', staminaMax: 2 },
-            { id: 'sepeda', name: 'Sepeda Ontel', icon: '🚲', speed: 15, hasModes: false, type: 'living', staminaMax: 20 },
-            { id: 'motor', name: 'Sepeda Motor Harian', icon: '🛵', speed: 60, hasModes: false, type: 'machine', fuelMax: 150 },
-            { id: 'motogp', name: 'Motor Balap (MotoGP)', icon: '🏍️', speed: 350, hasModes: false, type: 'machine', fuelMax: 100 },
-            { id: 'mobil', name: 'Mobil / Bus', icon: '🚌', speed: 90, hasModes: false, type: 'machine', fuelMax: 400 },
-            { id: 'kereta', name: 'Kereta Cepat Whoosh', icon: '🚆', speed: 350, hasModes: false, type: 'machine', fuelMax: 800 },
-            { id: 'pesawat', name: 'Pesawat Komersial', icon: '✈️', speed: 900, hasModes: false, type: 'machine', fuelMax: 2000 },
-            { id: 'roket', name: 'Apolo / Roket', icon: '🚀', speed: 28000, hasModes: false, type: 'machine', fuelMax: 5000 }
-        ];
-
-        // State Aplikasi
-        let appState = {
-            selectedIds: ['manusia', 'motor', 'motogp', 'cheetah'],
-            scaleMode: 'relative',
-            trackLength: 1000, // meter, 'infinite' jika tak terbatas
-            isRunning: false,
-            elapsedTime: 0, // detik
-            timerInterval: null,
-            routeDistance: 65,
-            
-            // Sim Data Per Objek
-            simData: {} // distance, currentSpeed, staminaFuel %
-        };
-
-        // Inisialisasi
-        document.addEventListener('DOMContentLoaded', () => {
-            resetSimData();
-            renderObjectSelector();
-            renderRaceTracks();
-            updateTravelTimeCalculations();
-            setupEventListeners();
-            lucide.createIcons();
-        });
-
-        function resetSimData() {
-            appState.selectedIds.forEach(id => {
-                appState.simData[id] = {
-                    distance: 0, // meter
-                    staminaFuel: 100, // %
-                    isFinished: false
-                };
-            });
+        // Cek jika sudah mencapai garis finish
+        if (progress >= 1.0) {
+          progress = 1.0;
+          isRunning = false;
+          alert(`Selamat! Objek telah menyelesaikan lintasan sejauh ${maxDistance} km.`);
         }
+      }
 
-        // Render Panel Pemilihan Objek
-        function renderObjectSelector() {
-            const container = document.getElementById('object-selector-container');
-            container.innerHTML = '';
+      // Update Panel Informasi
+      distText.innerText = totalDistanceKm.toFixed(2);
+      speedText.innerText = Math.round(currentSpeed * 100);
+      staminaText.innerText = Math.round(stamina);
 
-            SPEED_DATA.forEach(item => {
-                const isSelected = appState.selectedIds.includes(item.id);
-                const currentSpeed = item.hasModes 
-                    ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
-                    : item.speed;
+      // Render Visual
+      render();
 
-                const card = document.createElement('div');
-                card.className = `p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
-                    isSelected ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-400' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
-                }`;
+      if (isRunning) {
+        animFrameId = requestAnimationFrame(update);
+      }
+    }
 
-                let modeToggleHTML = '';
-                if (item.hasModes) {
-                    modeToggleHTML = `
-                        <div class="flex items-center gap-1 bg-white p-0.5 rounded border border-slate-300 text-[10px] my-1">
-                            <button onclick="event.stopPropagation(); setMode('${item.id}', 'walk')" class="px-1.5 py-0.5 rounded ${item.mode === 'walk' ? 'bg-blue-600 text-white font-bold' : 'text-slate-600'}">Jalan</button>
-                            <button onclick="event.stopPropagation(); setMode('${item.id}', 'run')" class="px-1.5 py-0.5 rounded ${item.mode === 'run' ? 'bg-blue-600 text-white font-bold' : 'text-slate-600'}">Lari</button>
-                        </div>
-                    `;
-                }
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                card.innerHTML = `
-                    <div class="flex items-center gap-2.5 flex-1 cursor-pointer" onclick="toggleSelectObject('${item.id}')">
-                        <input type="checkbox" ${isSelected ? 'checked' : ''} class="accent-blue-600 w-4 h-4 cursor-pointer">
-                        <span class="text-2xl">${item.icon}</span>
-                        <div>
-                            <div class="font-bold text-slate-800">${item.name}</div>
-                            <div class="text-[11px] font-black text-blue-700">${currentSpeed} km/jam</div>
-                        </div>
-                    </div>
-                    <div>${modeToggleHTML}</div>
-                `;
+      // Gambar Lintasan
+      drawTrack(infiniteOffset);
 
-                container.appendChild(card);
-            });
+      // Hitung Posisi Objek & Derivatif Vektor Arah (Sudut Kemiringan Jalur)
+      const pt1 = getPathPoint(progress, infiniteOffset);
+      const pt2 = getPathPoint(progress + 0.01, infiniteOffset); // Titik sedikit di depan
 
-            document.getElementById('selected-count').innerText = `${appState.selectedIds.length} Terpilih`;
-        }
+      // Menghitung Sudut (Angle) dari Kiri ke Kanan
+      const dx = pt2.x - pt1.x;
+      const dy = pt2.y - pt1.y;
+      const angle = Math.atan2(dy, dx); // Sudut otomatis mengarah ke depan jalur
 
-        function toggleSelectObject(id) {
-            if (appState.selectedIds.includes(id)) {
-                if (appState.selectedIds.length <= 1) {
-                    alert('Pilih setidaknya satu objek!');
-                    return;
-                }
-                appState.selectedIds = appState.selectedIds.filter(item => item !== id);
-                delete appState.simData[id];
-            } else {
-                appState.selectedIds.push(id);
-                appState.simData[id] = { distance: 0, staminaFuel: 100, isFinished: false };
-            }
-            renderObjectSelector();
-            renderRaceTracks();
-            updateTravelTimeCalculations();
-        }
+      // Gambar Objek di Atas Lintasan
+      drawObject(pt1.x, pt1.y, angle, objectSelect.value);
+    }
 
-        function setMode(id, mode) {
-            const item = SPEED_DATA.find(s => s.id === id);
-            if (item) {
-                item.mode = mode;
-                renderObjectSelector();
-                renderRaceTracks();
-                updateTravelTimeCalculations();
-            }
-        }
+    // Reset Simulasi
+    function resetSimulation() {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      
+      const selectedTrack = trackSelect.value;
+      maxDistance = selectedTrack === 'infinite' ? Infinity : parseFloat(selectedTrack);
+      
+      progress = maxDistance === Infinity ? 0.5 : 0;
+      totalDistanceKm = 0;
+      stamina = 100;
+      currentSpeed = 1;
+      infiniteOffset = 0;
+      isRunning = true;
 
-        // Render Arena Lintasan
-        function renderRaceTracks() {
-            const container = document.getElementById('race-tracks-container');
-            container.innerHTML = '';
+      update();
+    }
 
-            if (appState.selectedIds.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center my-auto text-xs">Pilih objek di sebelah kiri untuk memulai perbandingan.</div>`;
-                return;
-            }
+    btnStart.addEventListener('click', resetSimulation);
 
-            appState.selectedIds.forEach(id => {
-                const item = SPEED_DATA.find(s => s.id === id);
-                const sim = appState.simData[id] || { distance: 0, staminaFuel: 100 };
-                const baseSpeed = item.hasModes 
-                    ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
-                    : item.speed;
-
-                // Hitung posisi visual % pada lintasan (max 88% agar tidak kelewatan)
-                let posPercent = 0;
-                if (appState.trackLength !== 'infinite') {
-                    posPercent = Math.min(88, (sim.distance / appState.trackLength) * 88);
-                } else {
-                    // Pada mode infinite, posisi visual disesuaikan dengan log posisi
-                    posPercent = Math.min(88, (Math.log10(sim.distance + 1) / 5) * 88);
-                }
-
-                const lane = document.createElement('div');
-                lane.className = 'bg-slate-800/90 rounded-lg p-2.5 border border-slate-700 flex flex-col justify-between relative min-h-[72px]';
-
-                // Hitung Kecepatan Efektif Saat Ini (Mempertimbangkan Kelelahan/Bensin)
-                const currentEffSpeed = Math.round(baseSpeed * (sim.staminaFuel / 100));
-
-                lane.innerHTML = `
-                    <div class="flex justify-between items-center text-xs font-bold text-slate-300 mb-1 z-10">
-                        <span class="flex items-center gap-1.5 text-white">
-                            <span class="text-lg">${item.icon}</span> ${item.name}
-                        </span>
-                        <div class="flex items-center gap-3">
-                            <!-- Indikator Stamina / Bensin -->
-                            <div class="flex items-center gap-1 text-[10px] text-slate-400">
-                                <span>${item.type === 'living' ? 'Stamina:' : 'Bensin:'}</span>
-                                <div class="w-12 bg-slate-700 h-2 rounded-full overflow-hidden">
-                                    <div class="${sim.staminaFuel > 30 ? 'bg-emerald-500' : 'bg-red-500'} h-full" style="width: ${sim.staminaFuel}%"></div>
-                                </div>
-                            </div>
-                            <span class="text-amber-400 font-mono">${currentEffSpeed} km/jam</span>
-                        </div>
-                    </div>
-
-                    <!-- Track Lane Line & Runner Sprite -->
-                    <div class="w-full bg-slate-950 h-8 rounded-full relative overflow-hidden border border-slate-700 flex items-center px-1 ${appState.trackLength === 'infinite' && appState.isRunning ? 'infinite-track' : ''}">
-                        
-                        ${appState.trackLength !== 'infinite' ? `<div class="absolute right-2 top-0 bottom-0 w-1.5 bg-amber-400/80 z-0"></div>` : ''}
-
-                        <!-- Runner Icon Position (Menghadap Kanan) -->
-                        <div class="absolute left-1 flex items-center gap-1.5 text-xl z-10 transition-all duration-100" style="transform: translateX(${posPercent * 7}px);">
-                            <span class="flip-facing-right">${item.icon}</span>
-                            <span class="text-[10px] font-bold text-emerald-400 bg-slate-900/90 px-1 rounded border border-slate-700">
-                                ${formatDistance(sim.distance)}
-                            </span>
-                        </div>
-                    </div>
-                `;
-
-                container.appendChild(lane);
-            });
-        }
-
-        function formatDistance(distMeters) {
-            if (distMeters >= 1000) {
-                return (distMeters / 1000).toFixed(2) + ' km';
-            }
-            return Math.floor(distMeters) + ' m';
-        }
-
-        // Kalkulator Estimasi Rute
-        function updateTravelTimeCalculations() {
-            const resultsContainer = document.getElementById('travel-time-results');
-            resultsContainer.innerHTML = '';
-
-            const distance = appState.routeDistance;
-            document.getElementById('route-distance-text').innerText = `${distance} km`;
-
-            appState.selectedIds.forEach(id => {
-                const item = SPEED_DATA.find(s => s.id === id);
-                const speed = item.hasModes 
-                    ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
-                    : item.speed;
-
-                const timeInHours = distance / speed;
-                let timeText = '';
-
-                if (timeInHours < 1 / 60) {
-                    const seconds = Math.round(timeInHours * 3600);
-                    timeText = `${seconds} Detik`;
-                } else if (timeInHours < 1) {
-                    const minutes = Math.round(timeInHours * 60);
-                    timeText = `${minutes} Menit`;
-                } else {
-                    const hours = Math.floor(timeInHours);
-                    const minutes = Math.round((timeInHours - hours) * 60);
-                    timeText = `${hours} Jam ${minutes > 0 ? minutes + ' Mnt' : ''}`;
-                }
-
-                const row = document.createElement('div');
-                row.className = 'flex justify-between items-center text-xs p-1.5 bg-slate-50 rounded border border-slate-200';
-                row.innerHTML = `
-                    <span class="font-bold text-slate-700 flex items-center gap-1">
-                        <span>${item.icon}</span> ${item.name}
-                    </span>
-                    <span class="font-black text-blue-700">${timeText}</span>
-                `;
-                resultsContainer.appendChild(row);
-            });
-        }
-
-        // Event Listeners & Kontrol
-        function setupEventListeners() {
-            document.getElementById('btn-start').onclick = () => {
-                if (!appState.isRunning) {
-                    appState.isRunning = true;
-                    startSimLoop();
-                }
-            };
-
-            document.getElementById('btn-pause').onclick = () => {
-                appState.isRunning = false;
-                clearInterval(appState.timerInterval);
-                renderRaceTracks();
-            };
-
-            document.getElementById('btn-reset').onclick = () => {
-                appState.isRunning = false;
-                clearInterval(appState.timerInterval);
-                appState.elapsedTime = 0;
-                resetSimData();
-                document.getElementById('timer-display').innerText = 'Waktu: 00:00.0s';
-                renderRaceTracks();
-            };
-
-            document.querySelectorAll('input[name="scale-mode"]').forEach(radio => {
-                radio.onchange = (e) => {
-                    appState.scaleMode = e.target.value;
-                    updateModeLabelStyling();
-                };
-            });
-
-            document.getElementById('track-length-select').onchange = (e) => {
-                const val = e.target.value;
-                appState.trackLength = val === 'infinite' ? 'infinite' : parseInt(val);
-                
-                const footerInfo = document.getElementById('track-info-footer');
-                const finishLabel = document.getElementById('track-finish-label');
-                
-                if (val === 'infinite') {
-                    footerInfo.innerText = 'Mode Tak Berbatas (Endless Run) dengan Penurun Stamina/Bensin';
-                    finishLabel.innerText = 'Tanpa Batas ∞';
-                } else {
-                    const kmVal = parseInt(val) / 1000;
-                    footerInfo.innerText = `Lintasan ${kmVal} Km dengan Pengaruh Daya Tahan`;
-                    finishLabel.innerText = `Garis Finish (${kmVal} km)`;
-                }
-
-                resetSimData();
-                renderRaceTracks();
-            };
-
-            document.getElementById('route-select').onchange = (e) => {
-                appState.routeDistance = parseInt(e.target.value);
-                updateTravelTimeCalculations();
-            };
-        }
-
-        function updateModeLabelStyling() {
-            const relLabel = document.getElementById('label-mode-relative');
-            const realLabel = document.getElementById('label-mode-real');
-
-            if (appState.scaleMode === 'relative') {
-                relLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold bg-blue-600 text-white shadow-sm';
-                realLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold text-slate-600 hover:text-slate-800';
-            } else {
-                realLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold bg-blue-600 text-white shadow-sm';
-                relLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold text-slate-600 hover:text-slate-800';
-            }
-        }
-
-        // Timer Loop Utama
-        function startSimLoop() {
-            clearInterval(appState.timerInterval);
-
-            appState.timerInterval = setInterval(() => {
-                if (!appState.isRunning) return;
-
-                appState.elapsedTime += 0.1;
-                document.getElementById('timer-display').innerText = `Waktu: ${appState.elapsedTime.toFixed(1)}s`;
-
-                let allFinished = true;
-
-                appState.selectedIds.forEach(id => {
-                    const item = SPEED_DATA.find(s => s.id === id);
-                    const sim = appState.simData[id];
-
-                    if (sim.isFinished) return;
-
-                    const baseSpeedKmH = item.hasModes 
-                        ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
-                        : item.speed;
-
-                    // Pengaruh Kelelahan / Kebakaran Bensin
-                    const maxCap = item.type === 'living' ? item.staminaMax : item.fuelMax;
-                    const kmTraveled = sim.distance / 1000;
-                    
-                    // Hitung sisa stamina/bensin
-                    let remainingPct = Math.max(10, 100 - ((kmTraveled / maxCap) * 90));
-                    sim.staminaFuel = remainingPct;
-
-                    // Kecepatan riil terpengaruh stamina (m/s)
-                    const effSpeedKmH = baseSpeedKmH * (remainingPct / 100);
-                    const speedMeterPerSec = (effSpeedKmH * 1000) / 3600;
-
-                    // Pertambahan jarak per 100ms
-                    let distStep = speedMeterPerSec * 0.1;
-                    
-                    if (appState.scaleMode === 'relative') {
-                        // Pada mode visual, dipercepat sedikit agar menarik ditonton
-                        distStep = distStep * 3;
-                    }
-
-                    sim.distance += distStep;
-
-                    // Cek Finish jika bukan mode tak terbatas
-                    if (appState.trackLength !== 'infinite') {
-                        if (sim.distance >= appState.trackLength) {
-                            sim.distance = appState.trackLength;
-                            sim.isFinished = true;
-                        } else {
-                            allFinished = false;
-                        }
-                    } else {
-                        allFinished = false;
-                    }
-                });
-
-                renderRaceTracks();
-
-                if (allFinished && appState.trackLength !== 'infinite') {
-                    appState.isRunning = false;
-                    clearInterval(appState.timerInterval);
-                }
-            }, 100);
-        }
-    </script>
+    // Render Awal
+    render();
+  </script>
 </body>
 </html>
