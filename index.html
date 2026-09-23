@@ -72,7 +72,7 @@
 <body>
 
   <div id="controls">
-    <label>Lintasan: <strong>5 km</strong></label>
+    <label>Lintasan: <strong>5.00 km</strong></label>
 
     <label for="objectSelect">Pilih Objek:</label>
     <select id="objectSelect">
@@ -101,22 +101,21 @@
     const distText = document.getElementById('distText');
     const speedText = document.getElementById('speedText');
 
-    // Parameter Simulasi Tetap (5 km)
-    const TARGET_DISTANCE_KM = 5.0; 
-    let progress = 0;           // 0.0 (Kanan) -> 1.0 (Kiri)
-    let totalDistanceKm = 0;    
+    // Jarak Lintasan Ditetapkan 5.00 km
+    const TOTAL_TRACK_KM = 5.0; 
+    let progress = 0;           // 0.0 (Batas Kanan / 0 km) -> 1.0 (Batas Kiri / 5 km)
     let isRunning = false;
     let animFrameId = null;
     let animStep = 0;           
 
-    // Menghitung koordinat titik lintasan DARI KANAN (t=0) KE KIRI (t=1)
+    // Posisi Titik Lintasan Presisi (t = 0 di X=800 Kanan, t = 1 di X=0 Kiri)
     function getPathPoint(t) {
       const posX = canvas.width - (t * canvas.width);
       const posY = 200 + Math.sin(t * 4 * Math.PI) * 60 + Math.cos(t * 2 * Math.PI) * 30;
       return { x: posX, y: posY };
     }
 
-    // Menggambar Jalur Lintasan
+    // Menggambar Lintasan
     function drawTrack() {
       ctx.beginPath();
       ctx.lineWidth = 14;
@@ -131,7 +130,7 @@
       }
       ctx.stroke();
 
-      // Garis Tengah Jalan Putus-putus
+      // Garis Tengah Putus-putus
       ctx.beginPath();
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#ffffff';
@@ -152,7 +151,7 @@
       ctx.translate(x, y);
       ctx.rotate(angle);
       
-      // Dibalik melintang horizontal agar gambar bawaan menghadap ke kiri
+      // Dibalik melintang horizontal agar gambar menghadap ke kiri
       ctx.scale(-1, 1);
 
       if (type === 'kuda') {
@@ -249,31 +248,31 @@
       ctx.restore();
     }
 
-    // Logika Pembaruan Animasi Sederhana
+    // Loop Update Utama
     function update() {
       if (!isRunning) return;
 
-      const stepSpeed = 0.003; 
-      animStep += stepSpeed * 10;
+      // Penambahan progres berjalan konstan dan bertahap
+      const speedStep = 0.002; 
+      progress += speedStep;
+      animStep += speedStep * 10;
 
-      // Pergerakan Linier menuju Finish (5 km)
-      progress += stepSpeed;
-      totalDistanceKm = Math.min(TARGET_DISTANCE_KM, progress * TARGET_DISTANCE_KM);
+      // Menghitung Jarak Aktual berdasarkan persentase perjalanan (0.00 km - 5.00 km)
+      const currentDistanceKm = Math.min(TOTAL_TRACK_KM, progress * TOTAL_TRACK_KM);
+      distText.innerText = currentDistanceKm.toFixed(2);
+      speedText.innerText = "100";
 
-      // Benda bergerak dari t=0 (paling kanan) sampai t=1.0 (habis di paling kiri)
+      // Cek Jika Objek Telah Menyapu Layar Sampai Ujung Kiri (progress >= 1.0)
       if (progress >= 1.0) {
         progress = 1.0;
-        totalDistanceKm = TARGET_DISTANCE_KM;
+        distText.innerText = TOTAL_TRACK_KM.toFixed(2);
         isRunning = false;
         render();
         setTimeout(() => {
-          alert(`Selamat! Objek telah menyelesaikan lintasan sejauh ${TARGET_DISTANCE_KM} km.`);
+          alert(`Selamat! Objek telah menyelesaikan seluruh lintasan sejauh ${TOTAL_TRACK_KM.toFixed(2)} km.`);
         }, 50);
         return;
       }
-
-      distText.innerText = totalDistanceKm.toFixed(2);
-      speedText.innerText = "100";
 
       render();
 
@@ -290,7 +289,7 @@
       const pt1 = getPathPoint(progress);
       const pt2 = getPathPoint(Math.min(1.0, progress + 0.005));
 
-      // Hitung vektor arah kemiringan lintasan (Kanan ke Kiri)
+      // Hitung sudut kemiringan jalur dari kanan ke kiri
       const dx = pt2.x - pt1.x;
       const dy = pt2.y - pt1.y;
       const angle = Math.atan2(dy, dx) + Math.PI;
@@ -301,8 +300,7 @@
     function resetSimulation() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
       
-      progress = 0; // Mulai dari t=0 (Batas Paling Kanan)
-      totalDistanceKm = 0;
+      progress = 0; // Mulai dari Ujung Kanan (0.00 km)
       animStep = 0;
       isRunning = true;
 
