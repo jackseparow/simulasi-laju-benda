@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Laju Benda - Taman Numerasi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .runner-item {
+            transition: transform 0.1s linear;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2563eb;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header Banner dengan Logo BBGTK DIY & Maskot Si Yo -->
+    <header class="bg-blue-900 text-white shadow-lg sticky top-0 z-50 border-b-4 border-amber-400">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
+            
+            <!-- Sisi Kiri: Logo BBGTK DIY -->
+            <div class="flex items-center gap-3 shrink-0">
+                <img src="bbgtk diy logo.png" 
+                     alt="Logo BBGTK DIY" 
+                     class="h-12 md:h-16 w-auto object-contain drop-shadow bg-white/10 p-1 rounded"
+                     onerror="this.onerror=null; this.src='https://placehold.co/120x60/2563eb/ffffff?text=BBGTK+DIY';">
+            </div>
+
+            <!-- Bagian Tengah: Judul & Subtitle -->
+            <div class="text-center flex-1 my-auto">
+                <div class="flex items-center justify-center gap-2">
+                    <span class="bg-amber-400 text-slate-900 text-xs font-black px-2 py-0.5 rounded tracking-wide uppercase">Taman Numerasi</span>
+                    <h1 class="text-xl md:text-3xl font-black tracking-wide text-amber-300 drop-shadow">SIMULASI LAJU BENDA</h1>
+                </div>
+                <p class="text-xs md:text-sm text-blue-100 font-medium hidden sm:block mt-0.5">
+                    Eksplorasi & Perbandingan Impresi Kecepatan Benda, Kendaraan, dan Hewan
+                </p>
+            </div>
+
+            <!-- Sisi Kanan: Maskot Si Yo -->
+            <div class="flex flex-col items-center justify-center shrink-0 bg-blue-950/60 p-1.5 rounded-lg border border-blue-700/50">
+                <img src="maskot-siyo.png" 
+                     alt="Maskot Si Yo" 
+                     class="h-10 md:h-14 w-auto object-contain drop-shadow"
+                     onerror="this.onerror=null; this.src='https://placehold.co/80x80/f59e0b/ffffff?text=Si+Yo';">
+                <span class="text-xs font-bold text-amber-300 leading-none mt-1">Si Yo</span>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Container Layout -->
+    <main class="max-w-7xl mx-auto px-4 py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+
+        <!-- KIRI: Pilihan Objek & Kalkulator Rute Kota (5 Kolom) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+
+            <!-- Panel 1: Pilih Benda & Hewan -->
+            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200">
+                <div class="flex justify-between items-center border-b pb-2 mb-3">
+                    <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
+                        <i data-lucide="check-square" class="text-blue-600 w-5 h-5"></i>
+                        Pilih Objek Perbandingan
+                    </h2>
+                    <span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold" id="selected-count">0 Terpilih</span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 max-h-[380px] overflow-y-auto pr-1" id="object-selector-container">
+                    <!-- Dynamic Object Items Rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Panel 2: Kalkulator Estimasi Rute Antarkota di Pulau Jawa -->
+            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200">
+                <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2 border-b pb-2 mb-3">
+                    <i data-lucide="map-pin" class="text-amber-600 w-5 h-5"></i>
+                    Estimasi Waktu Tempuh Rute Jawa
+                </h2>
+
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Pilih Rute Antarkota:</label>
+                        <select id="route-select" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="65">Yogyakarta - Solo (65 km)</option>
+                            <option value="115">Yogyakarta - Semarang (115 km)</option>
+                            <option value="150">Jakarta - Bandung (150 km)</option>
+                            <option value="320">Surabaya - Malang / Banyuwangi (320 km)</option>
+                            <option value="450">Semarang - Surabaya (450 km)</option>
+                            <option value="560">Yogyakarta - Jakarta (560 km)</option>
+                            <option value="780">Jakarta - Surabaya (780 km)</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                        <div class="font-bold text-amber-900 flex justify-between items-center mb-1">
+                            <span>Jarak Lintasan:</span>
+                            <span id="route-distance-text" class="text-sm font-black">65 km</span>
+                        </div>
+                        <p class="text-[11px] text-amber-800">Perhitungan asumsi kecepatan konstan tanpa hambatan lalu lintas/makan/istirahat.</p>
+                    </div>
+
+                    <!-- Ringkasan Waktu Tempuh Objek Terpilih -->
+                    <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 border-t pt-2" id="travel-time-results">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- KANAN: Lintasan Balap & Visualisasi Kecepatan (7 Kolom) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+
+            <!-- Kontrol Utama Balapan -->
+            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <button id="btn-start" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
+                        <i data-lucide="play" class="w-4 h-4"></i> Mulai Balapan
+                    </button>
+                    <button id="btn-pause" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
+                        <i data-lucide="pause" class="w-4 h-4"></i> Jeda
+                    </button>
+                    <button id="btn-reset" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs md:text-sm rounded-lg transition">
+                        Reset
+                    </button>
+                </div>
+
+                <!-- Opsi Mode Skala Visual -->
+                <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border text-xs">
+                    <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-relative">
+                        <input type="radio" name="scale-mode" value="relative" checked class="hidden"> Mode Balap
+                    </label>
+                    <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-real">
+                        <input type="radio" name="scale-mode" value="real" class="hidden"> Skala Nyata (Linier)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Area Arena Lintasan Balap Vertikal -->
+            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
+                        <i data-lucide="flag" class="text-emerald-600 w-5 h-5"></i>
+                        Lintasan Balap Simulasi
+                    </h2>
+                    <span class="text-xs font-mono font-bold bg-slate-800 text-emerald-400 px-2.5 py-1 rounded" id="timer-display">
+                        00:00.0s
+                    </span>
+                </div>
+
+                <!-- Track Canvas Container -->
+                <div class="bg-slate-900 rounded-xl p-3 border-2 border-slate-800 flex-1 flex flex-col gap-3 min-h-[400px] relative overflow-hidden" id="race-tracks-container">
+                    <!-- Dynamic Race Lanes Rendered by JS -->
+                </div>
+
+                <div class="mt-3 text-[11px] text-slate-500 flex justify-between items-center px-1">
+                    <span>Garis Start (0m)</span>
+                    <span class="font-semibold text-slate-600">Simulasi Lintasan 100 Meter</span>
+                    <span>Garis Finish (100m)</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- SCRIPT LOGIKA SIMULASI KECEPATAN -->
+    <script>
+        // Master Repository Data Objek & Kecepatan (km/jam)
+        const SPEED_DATA = [
+            { id: 'manusia', name: 'Manusia', icon: '🚶', walkSpeed: 5, runSpeed: 20, hasModes: true, mode: 'walk' },
+            { id: 'anjing', name: 'Anjing', icon: '🐕', walkSpeed: 4, runSpeed: 45, hasModes: true, mode: 'run' },
+            { id: 'kucing', name: 'Kucing', icon: '🐈', walkSpeed: 3, runSpeed: 48, hasModes: true, mode: 'run' },
+            { id: 'kuda', name: 'Kuda', icon: '🐎', walkSpeed: 6, runSpeed: 70, hasModes: true, mode: 'run' },
+            { id: 'cheetah', name: 'Cheetah', icon: '🐆', walkSpeed: 7, runSpeed: 120, hasModes: true, mode: 'run' },
+            { id: 'sepeda', name: 'Sepeda Ontel / Santai', icon: '🚲', speed: 15, hasModes: false },
+            { id: 'motor', name: 'Sepeda Motor Harian', icon: '🛵', speed: 60, hasModes: false },
+            { id: 'motogp', name: 'Sepeda Motor Balap (MotoGP)', icon: '🏍️', speed: 350, hasModes: false },
+            { id: 'mobil', name: 'Mobil / Bus Intercity', icon: '🚌', speed: 90, hasModes: false },
+            { id: 'kereta', name: 'Kereta Cepat (Whoosh)', icon: '🚆', speed: 350, hasModes: false },
+            { id: 'pesawat', name: 'Pesawat Komersial', icon: '✈️', speed: 900, hasModes: false },
+            { id: 'roket', name: 'Apolo / Roket Luar Angkasa', icon: '🚀', speed: 28000, hasModes: false }
+        ];
+
+        // State Aplikasi
+        let appState = {
+            selectedIds: ['manusia', 'motor', 'motogp', 'cheetah'],
+            scaleMode: 'relative',
+            isRunning: false,
+            elapsedTime: 0,
+            timerInterval: null,
+            routeDistance: 65,
+            positions: {}
+        };
+
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', () => {
+            renderObjectSelector();
+            renderRaceTracks();
+            updateTravelTimeCalculations();
+            setupEventListeners();
+            lucide.createIcons();
+        });
+
+        // Render Panel Pemilihan Objek di Sisi Kiri
+        function renderObjectSelector() {
+            const container = document.getElementById('object-selector-container');
+            container.innerHTML = '';
+
+            SPEED_DATA.forEach(item => {
+                const isSelected = appState.selectedIds.includes(item.id);
+                const currentSpeed = item.hasModes 
+                    ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
+                    : item.speed;
+
+                const card = document.createElement('div');
+                card.className = `p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
+                    isSelected ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-400' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                }`;
+
+                let modeToggleHTML = '';
+                if (item.hasModes) {
+                    modeToggleHTML = `
+                        <div class="flex items-center gap-1 bg-white p-0.5 rounded border border-slate-300 text-[10px] my-1">
+                            <button onclick="event.stopPropagation(); setMode('${item.id}', 'walk')" class="px-1.5 py-0.5 rounded ${item.mode === 'walk' ? 'bg-blue-600 text-white font-bold' : 'text-slate-600'}">Jalan</button>
+                            <button onclick="event.stopPropagation(); setMode('${item.id}', 'run')" class="px-1.5 py-0.5 rounded ${item.mode === 'run' ? 'bg-blue-600 text-white font-bold' : 'text-slate-600'}">Lari</button>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5 flex-1 cursor-pointer" onclick="toggleSelectObject('${item.id}')">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} class="accent-blue-600 w-4 h-4 cursor-pointer">
+                        <span class="text-2xl">${item.icon}</span>
+                        <div>
+                            <div class="font-bold text-slate-800">${item.name}</div>
+                            <div class="text-[11px] font-black text-blue-700">${currentSpeed} km/jam</div>
+                        </div>
+                    </div>
+                    <div>${modeToggleHTML}</div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('selected-count').innerText = `${appState.selectedIds.length} Terpilih`;
+        }
+
+        // Toggle Pemilihan Objek
+        function toggleSelectObject(id) {
+            if (appState.selectedIds.includes(id)) {
+                if (appState.selectedIds.length <= 1) {
+                    alert('Pilih setidaknya satu objek untuk dibandingkan!');
+                    return;
+                }
+                appState.selectedIds = appState.selectedIds.filter(item => item !== id);
+            } else {
+                appState.selectedIds.push(id);
+            }
+            appState.positions[id] = 0;
+            renderObjectSelector();
+            renderRaceTracks();
+            updateTravelTimeCalculations();
+        }
+
+        // Toggle Mode Jalan vs Lari
+        function setMode(id, mode) {
+            const item = SPEED_DATA.find(s => s.id === id);
+            if (item) {
+                item.mode = mode;
+                renderObjectSelector();
+                renderRaceTracks();
+                updateTravelTimeCalculations();
+            }
+        }
+
+        // Render Lintasan Balap Vertikal di Sisi Kanan
+        function renderRaceTracks() {
+            const container = document.getElementById('race-tracks-container');
+            container.innerHTML = '';
+
+            if (appState.selectedIds.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-center my-auto text-xs">Pilih objek di sebelah kiri untuk memulai perbandingan.</div>`;
+                return;
+            }
+
+            appState.selectedIds.forEach(id => {
+                const item = SPEED_DATA.find(s => s.id === id);
+                const currentSpeed = item.hasModes 
+                    ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
+                    : item.speed;
+
+                const pos = appState.positions[id] || 0;
+
+                const lane = document.createElement('div');
+                lane.className = 'bg-slate-800/90 rounded-lg p-2 border border-slate-700 flex flex-col justify-between relative min-h-[64px]';
+
+                lane.innerHTML = `
+                    <div class="flex justify-between items-center text-xs font-bold text-slate-300 mb-1 z-10">
+                        <span class="flex items-center gap-1.5 text-white">
+                            <span class="text-lg">${item.icon}</span> ${item.name} ${item.hasModes ? `(${item.mode === 'walk' ? 'Berjalan' : 'Berlari'})` : ''}
+                        </span>
+                        <span class="text-amber-400 font-mono">${currentSpeed} km/jam</span>
+                    </div>
+
+                    <!-- Track Lane Line & Runner Sprite -->
+                    <div class="w-full bg-slate-950 h-7 rounded-full relative overflow-hidden border border-slate-700 flex items-center px-1">
+                        <!-- Finish Line Flag Bar -->
+                        <div class="absolute right-2 top-0 bottom-0 w-1.5 bg-amber-400/80 z-0"></div>
+
+                        <!-- Runner Icon Position -->
+                        <div class="runner-item absolute left-1 flex items-center gap-1 text-xl z-10" style="transform: translateX(${pos}%); transition: transform 0.1s linear;">
+                            <span>${item.icon}</span>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(lane);
+            });
+        }
+
+        // Kalkulator Estimasi Waktu Tempuh Rute Antarkota
+        function updateTravelTimeCalculations() {
+            const resultsContainer = document.getElementById('travel-time-results');
+            resultsContainer.innerHTML = '';
+
+            const distance = appState.routeDistance;
+            document.getElementById('route-distance-text').innerText = `${distance} km`;
+
+            appState.selectedIds.forEach(id => {
+                const item = SPEED_DATA.find(s => s.id === id);
+                const speed = item.hasModes 
+                    ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
+                    : item.speed;
+
+                const timeInHours = distance / speed;
+                let timeText = '';
+
+                if (timeInHours < 1 / 60) {
+                    const seconds = Math.round(timeInHours * 3600);
+                    timeText = `${seconds} Detik`;
+                } else if (timeInHours < 1) {
+                    const minutes = Math.round(timeInHours * 60);
+                    timeText = `${minutes} Menit`;
+                } else {
+                    const hours = Math.floor(timeInHours);
+                    const minutes = Math.round((timeInHours - hours) * 60);
+                    timeText = `${hours} Jam ${minutes > 0 ? minutes + ' Mnt' : ''}`;
+                }
+
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center text-xs p-1.5 bg-slate-50 rounded border border-slate-200';
+                row.innerHTML = `
+                    <span class="font-bold text-slate-700 flex items-center gap-1">
+                        <span>${item.icon}</span> ${item.name}
+                    </span>
+                    <span class="font-black text-blue-700">${timeText}</span>
+                `;
+                resultsContainer.appendChild(row);
+            });
+        }
+
+        // Event Listeners & Kontrol Timer
+        function setupEventListeners() {
+            // Button Start
+            document.getElementById('btn-start').onclick = () => {
+                if (!appState.isRunning) {
+                    appState.isRunning = true;
+                    startSimTimer();
+                }
+            };
+
+            // Button Pause
+            document.getElementById('btn-pause').onclick = () => {
+                appState.isRunning = false;
+                clearInterval(appState.timerInterval);
+            };
+
+            // Button Reset
+            document.getElementById('btn-reset').onclick = () => {
+                appState.isRunning = false;
+                clearInterval(appState.timerInterval);
+                appState.elapsedTime = 0;
+                appState.selectedIds.forEach(id => appState.positions[id] = 0);
+                document.getElementById('timer-display').innerText = '00:00.0s';
+                renderRaceTracks();
+            };
+
+            // Mode Skala Visual (Balap vs Nyata)
+            document.querySelectorAll('input[name="scale-mode"]').forEach(radio => {
+                radio.onchange = (e) => {
+                    appState.scaleMode = e.target.value;
+                    updateModeLabelStyling();
+                };
+            });
+            updateModeLabelStyling();
+
+            // Select Route City
+            document.getElementById('route-select').onchange = (e) => {
+                appState.routeDistance = parseInt(e.target.value);
+                updateTravelTimeCalculations();
+            };
+        }
+
+        function updateModeLabelStyling() {
+            const relLabel = document.getElementById('label-mode-relative');
+            const realLabel = document.getElementById('label-mode-real');
+
+            if (appState.scaleMode === 'relative') {
+                relLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold bg-blue-600 text-white shadow-sm';
+                realLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold text-slate-600 hover:text-slate-800';
+            } else {
+                realLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold bg-blue-600 text-white shadow-sm';
+                relLabel.className = 'cursor-pointer px-2 py-1 rounded font-bold text-slate-600 hover:text-slate-800';
+            }
+        }
+
+        // Loop Simulasi Pergerakan Balapan
+        function startSimTimer() {
+            clearInterval(appState.timerInterval);
+
+            appState.timerInterval = setInterval(() => {
+                if (!appState.isRunning) return;
+
+                appState.elapsedTime += 0.1;
+                document.getElementById('timer-display').innerText = `${appState.elapsedTime.toFixed(1)}s`;
+
+                let allFinished = true;
+
+                appState.selectedIds.forEach(id => {
+                    const item = SPEED_DATA.find(s => s.id === id);
+                    const speed = item.hasModes 
+                        ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
+                        : item.speed;
+
+                    let stepIncrement = 0;
+
+                    if (appState.scaleMode === 'relative') {
+                        stepIncrement = (Math.log10(speed + 1) * 1.5);
+                    } else {
+                        stepIncrement = (speed / 100) * 1.2;
+                    }
+
+                    if (!appState.positions[id]) appState.positions[id] = 0;
+                    
+                    if (appState.positions[id] < 92) {
+                        appState.positions[id] += stepIncrement;
+                        allFinished = false;
+                    } else {
+                        appState.positions[id] = 92;
+                    }
+                });
+
+                renderRaceTracks();
+
+                if (allFinished) {
+                    appState.isRunning = false;
+                    clearInterval(appState.timerInterval);
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>
