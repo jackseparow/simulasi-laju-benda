@@ -119,12 +119,10 @@
     let maxDistance = Infinity; // Batas lintasan (km)
     let isRunning = false;
     let animFrameId = null;
-    let animStep = 0;           // Variabel fase animasi (langkah kaki / putaran)
+    let animStep = 0;           // Fase animasi gerak kaki/roda
 
-    // Menghasilkan koordinat jalur bergelombang DARI KANAN KE KIRI
+    // Menghasilkan koordinat jalur bergelombang DARI KANAN (t=0) KE KIRI (t=1)
     function getPathPoint(t, offsetX = 0) {
-      // t = 0 -> Ujung Kanan (X = canvas.width)
-      // t = 1 -> Ujung Kiri (X = 0)
       const x = (1 - t) * canvas.width;
       const y = 200 + Math.sin(((1 - t) * 4 * Math.PI) + offsetX) * 60 + Math.cos((1 - t) * 2 * Math.PI) * 30;
       return { x, y };
@@ -133,12 +131,12 @@
     // Menggambar Lintasan
     function drawTrack(offsetX) {
       ctx.beginPath();
-      ctx.lineWidth = 12;
-      ctx.strokeStyle = '#8d6e63'; // Warna jalan tanah/lintasan
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#8d6e63'; // Warna lintasan tanah
       ctx.lineCap = 'round';
 
-      for (let i = 0; i <= 100; i++) {
-        const t = i / 100;
+      for (let i = 0; i <= 200; i++) {
+        const t = i / 200;
         const pt = getPathPoint(t, offsetX);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
@@ -148,127 +146,232 @@
       // Garis tengah lintasan (putus-putus)
       ctx.beginPath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = '#ffffff';
       ctx.setLineDash([8, 8]);
-      for (let i = 0; i <= 100; i++) {
-        const t = i / 100;
+      for (let i = 0; i <= 200; i++) {
+        const t = i / 200;
         const pt = getPathPoint(t, offsetX);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
-      ctx.setLineDash([]); // Reset garis
+      ctx.setLineDash([]); // Reset dash
     }
 
-    // Menggambar Objek/Hewan/Kendaraan
+    // Menggambar Objek/Hewan/Kendaraan Menghadap ke Kiri (Arah Gerak)
     function drawObject(x, y, angle, type) {
       ctx.save();
       ctx.translate(x, y);
       
-      // ROTASI: Sesuaikan sudut dengan rotasi canvas
+      // Mengikuti rotasi kemiringan jalan
       ctx.rotate(angle);
-      
-      // BALIK HORIZONTAL: Mengubah orientasi bawaan dari kanan ke kiri
-      ctx.scale(-1, 1);
 
-      // Gambar Objek Berdasarkan Pilihan
       if (type === 'kuda') {
-        // Ayunan kaki kuda berlawanan arah (gelombang sinus)
-        const legSwing = Math.sin(animStep * 10) * 12;
-        const headBob = Math.cos(animStep * 10) * 3;
+        // --- ANIMAISI KUDA (MENGHADAP KIRI) ---
+        const legPhase = animStep * 12;
+        const frontLeg1 = Math.sin(legPhase) * 0.6;
+        const frontLeg2 = Math.sin(legPhase + Math.PI) * 0.6;
+        const backLeg1 = Math.sin(legPhase + Math.PI * 0.5) * 0.6;
+        const backLeg2 = Math.sin(legPhase + Math.PI * 1.5) * 0.6;
+        const headBob = Math.sin(legPhase * 2) * 3;
 
-        // Badan Kuda
+        // Ekor Kuda (Di Belakang / Sisi Kanan)
+        ctx.strokeStyle = '#3e2723';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(18, -8);
+        ctx.quadraticCurveTo(25, -2, 22 + Math.sin(legPhase) * 4, 8);
+        ctx.stroke();
+
+        // Fungsi menggambar kaki kuda
+        const drawHorseLeg = (startX, startY, angleVal) => {
+          ctx.save();
+          ctx.translate(startX, startY);
+          ctx.rotate(angleVal);
+          ctx.fillStyle = '#4e342e';
+          ctx.fillRect(-2.5, 0, 5, 12);
+          // Tracak / Kuku Kuda
+          ctx.fillStyle = '#212121';
+          ctx.fillRect(-2.5, 10, 5, 3);
+          ctx.restore();
+        };
+
+        // Kaki Belakang (Di Sisi Kanan Badan)
+        drawHorseLeg(12, 5, backLeg1);
+        drawHorseLeg(6, 5, backLeg2);
+
+        // Badan Utama Kuda
         ctx.fillStyle = '#6d4c41';
-        ctx.fillRect(-20, -10, 35, 18);
-        
-        // Leher & Kepala (dengan animasi gerakan memanggut/head bobbing)
-        ctx.fillRect(10, -20 + headBob, 10, 15);
-        ctx.fillRect(12, -25 + headBob, 12, 8);
+        ctx.beginPath();
+        ctx.ellipse(0, -2, 20, 11, 0, 0, Math.PI * 2);
+        ctx.fill();
 
-        // Kaki-kaki beranimasi
-        ctx.fillStyle = '#3e2723';
-        // Kaki Belakang 1 & 2
-        ctx.fillRect(-15 + legSwing * 0.5, 8, 5, 12);
-        ctx.fillRect(-8 - legSwing * 0.5, 8, 5, 12);
-        // Kaki Depan 1 & 2
-        ctx.fillRect(2 - legSwing * 0.5, 8, 5, 12);
-        ctx.fillRect(9 + legSwing * 0.5, 8, 5, 12);
+        // Leher & Kepala (Di Sisi Kiri / Depan)
+        ctx.save();
+        ctx.translate(-14, -8 + headBob * 0.5);
+        ctx.rotate(-0.4);
+        ctx.fillRect(-6, -16, 10, 16); // Leher
+        
+        // Kepala
+        ctx.beginPath();
+        ctx.ellipse(-8, -16, 10, 6, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Telinga
+        ctx.beginPath();
+        ctx.moveTo(-4, -20);
+        ctx.lineTo(-1, -25);
+        ctx.lineTo(-1, -20);
+        ctx.fill();
 
         // Mata
         ctx.fillStyle = '#fff';
-        ctx.fillRect(20, -23 + headBob, 3, 3);
+        ctx.beginPath();
+        ctx.arc(-11, -17, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-12, -17, 1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Kaki Depan (Di Sisi Kiri Badan)
+        drawHorseLeg(-10, 5, frontLeg1);
+        drawHorseLeg(-16, 5, frontLeg2);
 
       } else if (type === 'manusia') {
-        // Ayunan kaki dan tangan pelari
-        const swing = Math.sin(animStep * 12) * 14;
+        // --- ANIMASI PELARI (MENGHADAP KIRI) ---
+        const runPhase = animStep * 14;
+        const leg1Angle = Math.sin(runPhase) * 0.7;
+        const leg2Angle = Math.sin(runPhase + Math.PI) * 0.7;
+        const arm1Angle = Math.sin(runPhase + Math.PI) * 0.6;
+        const arm2Angle = Math.sin(runPhase) * 0.6;
 
-        // Kepala
-        ctx.fillStyle = '#e0a96d';
-        ctx.beginPath(); 
-        ctx.arc(0, -24, 6, 0, Math.PI * 2); 
-        ctx.fill();
-
-        // Badan
-        ctx.fillStyle = '#007bff';
-        ctx.fillRect(-5, -18, 10, 16);
-
-        // Kaki Beranimasi
-        ctx.strokeStyle = '#222';
         ctx.lineWidth = 3.5;
         ctx.lineCap = 'round';
 
-        // Kaki Belakang
+        // Kaki Belakang (Leg 2)
+        ctx.save();
+        ctx.translate(0, 0);
+        ctx.rotate(leg2Angle);
+        ctx.strokeStyle = '#333';
         ctx.beginPath();
-        ctx.moveTo(-2, -2);
-        ctx.lineTo(-2 - swing, 12);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-4, 12);
+        ctx.lineTo(-1, 22);
         ctx.stroke();
+        ctx.restore();
 
-        // Kaki Depan
-        ctx.beginPath();
-        ctx.moveTo(2, -2);
-        ctx.lineTo(2 + swing, 12);
-        ctx.stroke();
-
-        // Tangan Beranimasi (Mengayun berlawanan dari arah kaki)
+        // Lengan Belakang (Arm 2)
+        ctx.save();
+        ctx.translate(0, -16);
+        ctx.rotate(arm2Angle);
         ctx.strokeStyle = '#e0a96d';
-        ctx.lineWidth = 2.5;
-
-        // Tangan Kiri
         ctx.beginPath();
-        ctx.moveTo(-3, -14);
-        ctx.lineTo(-3 + swing * 0.8, -4);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-6, 8);
+        ctx.lineTo(-10, 14);
         ctx.stroke();
+        ctx.restore();
 
-        // Tangan Kanan
+        // Badan / Torso (Condong ke kiri saat berlari)
+        ctx.save();
+        ctx.rotate(-0.15);
+        ctx.fillStyle = '#007bff';
+        ctx.fillRect(-5, -20, 10, 18);
+
+        // Kepala
+        ctx.fillStyle = '#e0a96d';
         ctx.beginPath();
-        ctx.moveTo(3, -14);
-        ctx.lineTo(3 - swing * 0.8, -4);
+        ctx.arc(-2, -26, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hidung / Indikator Wajah Menghadap Kiri
+        ctx.beginPath();
+        ctx.arc(-7, -26, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Kaki Depan (Leg 1)
+        ctx.save();
+        ctx.translate(0, 0);
+        ctx.rotate(leg1Angle);
+        ctx.strokeStyle = '#111';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-4, 12);
+        ctx.lineTo(-1, 22);
         ctx.stroke();
+        ctx.restore();
+
+        // Lengan Depan (Arm 1)
+        ctx.save();
+        ctx.translate(0, -16);
+        ctx.rotate(arm1Angle);
+        ctx.strokeStyle = '#ffcc80';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-6, 8);
+        ctx.lineTo(-12, 12);
+        ctx.stroke();
+        ctx.restore();
 
       } else if (type === 'mobil') {
-        // Sudut rotasi garis roda untuk indikator roda berputar
-        const wheelAngle = animStep * 15;
+        // --- ANIMASI MOBIL (MENGHADAP KIRI) ---
+        const wheelAngle = -animStep * 20; // Putaran roda berlawanan jarum jam
+        const bounce = Math.sin(animStep * 30) * 1; // Efek suspensi jalanan
 
-        // Bodi Mobil
+        ctx.save();
+        ctx.translate(0, bounce);
+
+        // Badan Mobil Utama (Depan di Kiri, Belakang di Kanan)
         ctx.fillStyle = '#d32f2f';
-        ctx.fillRect(-22, -12, 44, 16); // Bodi bawah
-        ctx.fillStyle = '#b71c1c';
-        ctx.fillRect(-10, -22, 24, 10); // Bodi atas/Atap
+        ctx.beginPath();
+        ctx.roundRect(-24, -14, 48, 14, [4]);
+        ctx.fill();
 
-        // Roda Berputar
+        // Atap & Kaca Mobil
+        ctx.fillStyle = '#b71c1c';
+        ctx.beginPath();
+        ctx.moveTo(12, -14);
+        ctx.lineTo(4, -24);
+        ctx.lineTo(-12, -24);
+        ctx.lineTo(-18, -14);
+        ctx.closePath();
+        ctx.fill();
+
+        // Jendela Kaca
+        ctx.fillStyle = '#81d4fa';
+        ctx.beginPath();
+        ctx.moveTo(10, -15);
+        ctx.lineTo(3, -22);
+        ctx.lineTo(-10, -22);
+        ctx.lineTo(-15, -15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Lampu Depan (Lampu di Sisi Kiri)
+        ctx.fillStyle = '#ffeb3b';
+        ctx.fillRect(-25, -11, 3, 5);
+
+        // Lampu Belakang (Merah di Sisi Kanan)
+        ctx.fillStyle = '#ff5252';
+        ctx.fillRect(23, -11, 2, 5);
+
+        // Fungsi menggambar roda berputar
         const drawWheel = (wx, wy) => {
           ctx.save();
           ctx.translate(wx, wy);
           ctx.rotate(wheelAngle);
-          
-          // Ban
+
+          // Ban Luar
           ctx.fillStyle = '#212121';
-          ctx.beginPath(); 
-          ctx.arc(0, 0, 6, 0, Math.PI * 2); 
+          ctx.beginPath();
+          ctx.arc(0, 0, 6, 0, Math.PI * 2);
           ctx.fill();
 
-          // Velg / Jari-jari roda
-          ctx.strokeStyle = '#fff';
+          // Velg & Jari-jari Roda
+          ctx.strokeStyle = '#eeeeee';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(-5, 0); ctx.lineTo(5, 0);
@@ -278,45 +381,41 @@
           ctx.restore();
         };
 
-        drawWheel(-12, 5); // Roda Belakang
-        drawWheel(12, 5);  // Roda Depan
+        drawWheel(-13, 0); // Roda Depan (Kiri)
+        drawWheel(13, 0);  // Roda Belakang (Kanan)
 
-        // Lampu Depan
-        ctx.fillStyle = '#ffeb3b';
-        ctx.fillRect(20, -8, 3, 5);
+        ctx.restore();
       }
 
       ctx.restore();
     }
 
-    // Program Utama (Update & Render Loop)
+    // Loop Pembaruan Logika
     let infiniteOffset = 0;
 
     function update() {
       if (!isRunning) return;
 
-      // 1. Kalkulasi Faktor Daya Tahan / Melambat
+      // 1. Kalkulasi Pengurangan Stamina
       const decayRate = objectSelect.value === 'manusia' ? 0.08 : (objectSelect.value === 'kuda' ? 0.05 : 0.03);
-      stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100)); // Minimum stamina 5%
-      currentSpeed = stamina / 100; // Kecepatan proporsional dengan stamina
+      stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100));
+      currentSpeed = stamina / 100;
 
       // 2. Laju Pergerakan (Kanan ke Kiri)
-      const baseIncrement = 0.002 * currentSpeed;
-      
-      // Update langkah/fase animasi hanya saat bergerak
+      const baseIncrement = 0.0025 * currentSpeed;
       animStep += baseIncrement * 10;
 
       if (maxDistance === Infinity) {
-        // MODE TAK BERBATAS: Objek tetap di tengah lintasan, lintasan bergeser maju
+        // Mode Tak Berbatas
         totalDistanceKm += baseIncrement * 5;
-        infiniteOffset += baseIncrement * 4; 
+        infiniteOffset += baseIncrement * 4;
         progress = 0.5; // Tetap di tengah layar
       } else {
-        // MODE LINTASAN TERBATAS (1, 5, 10 km)
+        // Mode Terbatas (1, 5, 10 km)
         progress += baseIncrement;
         totalDistanceKm = progress * maxDistance;
 
-        // Cek jika sudah mencapai garis finish di sebelah kiri
+        // Cek Apakah Telah Mencapai Ujung Kiri Lintasan
         if (progress >= 1.0) {
           progress = 1.0;
           isRunning = false;
@@ -328,12 +427,12 @@
         }
       }
 
-      // Update Panel Informasi
+      // Update Teks Status
       distText.innerText = totalDistanceKm.toFixed(2);
       speedText.innerText = Math.round(currentSpeed * 100);
       staminaText.innerText = Math.round(stamina);
 
-      // Render Visual
+      // Render Ulang Tampilan
       render();
 
       if (isRunning) {
@@ -347,14 +446,14 @@
       // Gambar Lintasan
       drawTrack(infiniteOffset);
 
-      // Hitung Posisi Objek & Vektor Arah Gerak (Kanan ke Kiri)
+      // Hitung Titik Objek & Sudut Vektor Kemiringan Jalur
       const pt1 = getPathPoint(progress, infiniteOffset);
-      const pt2 = getPathPoint(progress + 0.01, infiniteOffset); // Titik sedikit di depan (ke arah kiri)
+      const pt2 = getPathPoint(progress + 0.005, infiniteOffset); // Titik sampel kecil di depan
 
-      // Menghitung Sudut (Angle) Pergerakan dari Kanan ke Kiri
+      // Sudut Vektor Arah Gerak (Dari Kanan ke Kiri)
       const dx = pt2.x - pt1.x;
       const dy = pt2.y - pt1.y;
-      const angle = Math.atan2(dy, dx); 
+      const angle = Math.atan2(dy, dx);
 
       // Gambar Objek di Atas Lintasan
       drawObject(pt1.x, pt1.y, angle, objectSelect.value);
@@ -363,10 +462,10 @@
     // Reset Simulasi
     function resetSimulation() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
-      
+
       const selectedTrack = trackSelect.value;
       maxDistance = selectedTrack === 'infinite' ? Infinity : parseFloat(selectedTrack);
-      
+
       progress = maxDistance === Infinity ? 0.5 : 0;
       totalDistanceKm = 0;
       stamina = 100;
@@ -380,7 +479,7 @@
 
     btnStart.addEventListener('click', resetSimulation);
 
-    // Render Awal
+    // Render Awal saat Halaman Dimuat
     render();
   </script>
 </body>
