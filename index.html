@@ -72,13 +72,7 @@
 <body>
 
   <div id="controls">
-    <label for="trackSelect">Pilih Lintasan:</label>
-    <select id="trackSelect">
-      <option value="1">1 km</option>
-      <option value="5">5 km</option>
-      <option value="10">10 km</option>
-      <option value="infinite" selected>Tak Berbatas (Infinite)</option>
-    </select>
+    <label>Lintasan: <strong>5 km</strong></label>
 
     <label for="objectSelect">Pilih Objek:</label>
     <select id="objectSelect">
@@ -93,7 +87,7 @@
   <div id="canvas-container">
     <canvas id="simCanvas" width="800" height="400"></canvas>
     <div id="stats">
-      Jarak Tempuh: <span id="distText">0.00</span> km<br>
+      Jarak Tempuh: <span id="distText">0.00</span> / 5.00 km<br>
       Kecepatan: <span id="speedText">100</span>%
     </div>
   </div>
@@ -102,51 +96,49 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Element Kontrol & Status
-    const trackSelect = document.getElementById('trackSelect');
     const objectSelect = document.getElementById('objectSelect');
     const btnStart = document.getElementById('btnStart');
     const distText = document.getElementById('distText');
     const speedText = document.getElementById('speedText');
 
-    // Parameter Simulasi
-    let progress = 0;           // Posisi sepanjang lintasan (0.0 = Kanan, 1.0 = Kiri)
-    let totalDistanceKm = 0;    // Jarak aktual yang telah ditempuh (km)
-    let maxDistance = Infinity; // Batas lintasan (km)
+    // Parameter Simulasi Tetap (5 km)
+    const TARGET_DISTANCE_KM = 5.0; 
+    let progress = 0;           // 0.0 (Kanan) -> 1.0 (Kiri)
+    let totalDistanceKm = 0;    
     let isRunning = false;
     let animFrameId = null;
-    let animStep = 0;           // Langkah kaki / animasi
+    let animStep = 0;           
 
-    // Posisi Lintasan Presisi (0.0 di Tepi Kanan, 1.0 di Tepi Kiri)
-    function getPathPoint(t, offsetX = 0) {
-      const x = (1 - t) * canvas.width;
-      const y = 200 + Math.sin(((1 - t) * 4 * Math.PI) + offsetX) * 60 + Math.cos((1 - t) * 2 * Math.PI) * 30;
-      return { x, y };
+    // Menghitung koordinat titik lintasan DARI KANAN (t=0) KE KIRI (t=1)
+    function getPathPoint(t) {
+      const posX = canvas.width - (t * canvas.width);
+      const posY = 200 + Math.sin(t * 4 * Math.PI) * 60 + Math.cos(t * 2 * Math.PI) * 30;
+      return { x: posX, y: posY };
     }
 
-    // Menggambar Lintasan
-    function drawTrack(offsetX) {
+    // Menggambar Jalur Lintasan
+    function drawTrack() {
       ctx.beginPath();
-      ctx.lineWidth = 12;
+      ctx.lineWidth = 14;
       ctx.strokeStyle = '#8d6e63';
       ctx.lineCap = 'round';
 
       for (let i = 0; i <= 200; i++) {
         const t = i / 200;
-        const pt = getPathPoint(t, offsetX);
+        const pt = getPathPoint(t);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
 
-      // Garis Tengah Putus-putus
+      // Garis Tengah Jalan Putus-putus
       ctx.beginPath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = '#ffffff';
       ctx.setLineDash([8, 8]);
       for (let i = 0; i <= 200; i++) {
         const t = i / 200;
-        const pt = getPathPoint(t, offsetX);
+        const pt = getPathPoint(t);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
       }
@@ -154,12 +146,14 @@
       ctx.setLineDash([]);
     }
 
-    // Menggambar Objek
+    // Menggambar Objek Menghadap Arah Gerak (Kiri)
     function drawObject(x, y, angle, type) {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(angle);
-      ctx.scale(-1, 1); // Membalik orientasi horizontal agar menghadap arah gerak
+      
+      // Dibalik melintang horizontal agar gambar bawaan menghadap ke kiri
+      ctx.scale(-1, 1);
 
       if (type === 'kuda') {
         const legSwing = Math.sin(animStep * 10) * 12;
@@ -255,35 +249,27 @@
       ctx.restore();
     }
 
-    let infiniteOffset = 0;
-
-    // Loop Utama Update (Kecepatan Konstan Tanpa Pengurangan Stamina)
+    // Logika Pembaruan Animasi Sederhana
     function update() {
       if (!isRunning) return;
 
-      const baseIncrement = 0.0025; // Kecepatan stabil penuh (100%)
-      animStep += baseIncrement * 10;
+      const stepSpeed = 0.003; 
+      animStep += stepSpeed * 10;
 
-      if (maxDistance === Infinity) {
-        // Mode Tanpa Batas
-        totalDistanceKm += baseIncrement * 5;
-        infiniteOffset -= baseIncrement * 4; 
-        progress = 0.5;
-      } else {
-        // Mode Terbatas (1 km, 5 km, 10 km)
-        progress += baseIncrement;
-        totalDistanceKm = progress * maxDistance;
+      // Pergerakan Linier menuju Finish (5 km)
+      progress += stepSpeed;
+      totalDistanceKm = Math.min(TARGET_DISTANCE_KM, progress * TARGET_DISTANCE_KM);
 
-        // BERGERAK SAMPAI SELURUH LINTASAN HABIS TOTAL (progress >= 1.0)
-        if (progress >= 1.0) {
-          progress = 1.0;
-          isRunning = false;
-          render();
-          setTimeout(() => {
-            alert(`Selamat! Objek telah menyelesaikan seluruh lintasan sejauh ${maxDistance} km.`);
-          }, 50);
-          return;
-        }
+      // Benda bergerak dari t=0 (paling kanan) sampai t=1.0 (habis di paling kiri)
+      if (progress >= 1.0) {
+        progress = 1.0;
+        totalDistanceKm = TARGET_DISTANCE_KM;
+        isRunning = false;
+        render();
+        setTimeout(() => {
+          alert(`Selamat! Objek telah menyelesaikan lintasan sejauh ${TARGET_DISTANCE_KM} km.`);
+        }, 50);
+        return;
       }
 
       distText.innerText = totalDistanceKm.toFixed(2);
@@ -299,14 +285,15 @@
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      drawTrack(infiniteOffset);
+      drawTrack();
 
-      const pt1 = getPathPoint(progress, infiniteOffset);
-      const pt2 = getPathPoint(Math.min(1.0, progress + 0.005), infiniteOffset);
+      const pt1 = getPathPoint(progress);
+      const pt2 = getPathPoint(Math.min(1.0, progress + 0.005));
 
+      // Hitung vektor arah kemiringan lintasan (Kanan ke Kiri)
       const dx = pt2.x - pt1.x;
       const dy = pt2.y - pt1.y;
-      const angle = Math.atan2(dy, -dx); 
+      const angle = Math.atan2(dy, dx) + Math.PI;
 
       drawObject(pt1.x, pt1.y, angle, objectSelect.value);
     }
@@ -314,12 +301,8 @@
     function resetSimulation() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
       
-      const selectedTrack = trackSelect.value;
-      maxDistance = selectedTrack === 'infinite' ? Infinity : parseFloat(selectedTrack);
-      
-      progress = maxDistance === Infinity ? 0.5 : 0; // Mulai tepat di titik awal 0 (ujung kanan)
+      progress = 0; // Mulai dari t=0 (Batas Paling Kanan)
       totalDistanceKm = 0;
-      infiniteOffset = 0;
       animStep = 0;
       isRunning = true;
 
