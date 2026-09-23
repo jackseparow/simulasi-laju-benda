@@ -94,8 +94,7 @@
     <canvas id="simCanvas" width="800" height="400"></canvas>
     <div id="stats">
       Jarak Tempuh: <span id="distText">0.00</span> km<br>
-      Kecepatan: <span id="speedText">100</span>%<br>
-      Stamina/Bahan Bakar: <span id="staminaText">100</span>%
+      Kecepatan: <span id="speedText">100</span>%
     </div>
   </div>
 
@@ -109,22 +108,17 @@
     const btnStart = document.getElementById('btnStart');
     const distText = document.getElementById('distText');
     const speedText = document.getElementById('speedText');
-    const staminaText = document.getElementById('staminaText');
 
     // Parameter Simulasi
-    let progress = 0;           // Progress gerak (0.0 = Titik Awal/Kanan, 1.0 = Titik Akhir/Kiri)
+    let progress = 0;           // Posisi sepanjang lintasan (0.0 = Kanan, 1.0 = Kiri)
     let totalDistanceKm = 0;    // Jarak aktual yang telah ditempuh (km)
-    let currentSpeed = 1;       // Pengali kecepatan saat ini
-    let stamina = 100;          // Persentase stamina/bahan bakar (100% -> 0%)
     let maxDistance = Infinity; // Batas lintasan (km)
     let isRunning = false;
     let animFrameId = null;
     let animStep = 0;           // Langkah kaki / animasi
 
-    // Fungsi Posisi Lintasan Presisi (0.0 sampai 1.0 Menyapu Tepi ke Tepi Canvas)
+    // Posisi Lintasan Presisi (0.0 di Tepi Kanan, 1.0 di Tepi Kiri)
     function getPathPoint(t, offsetX = 0) {
-      // t = 0 -> X = 800 (Tepi Kanan)
-      // t = 1 -> X = 0 (Tepi Kiri)
       const x = (1 - t) * canvas.width;
       const y = 200 + Math.sin(((1 - t) * 4 * Math.PI) + offsetX) * 60 + Math.cos((1 - t) * 2 * Math.PI) * 30;
       return { x, y };
@@ -165,7 +159,7 @@
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(angle);
-      ctx.scale(-1, 1); // Orientasi menghadap arah gerak
+      ctx.scale(-1, 1); // Membalik orientasi horizontal agar menghadap arah gerak
 
       if (type === 'kuda') {
         const legSwing = Math.sin(animStep * 10) * 12;
@@ -263,15 +257,11 @@
 
     let infiniteOffset = 0;
 
-    // Loop Utama Update
+    // Loop Utama Update (Kecepatan Konstan Tanpa Pengurangan Stamina)
     function update() {
       if (!isRunning) return;
 
-      const decayRate = objectSelect.value === 'manusia' ? 0.08 : (objectSelect.value === 'kuda' ? 0.05 : 0.03);
-      stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100)); 
-      currentSpeed = stamina / 100; 
-
-      const baseIncrement = 0.0025 * currentSpeed;
+      const baseIncrement = 0.0025; // Kecepatan stabil penuh (100%)
       animStep += baseIncrement * 10;
 
       if (maxDistance === Infinity) {
@@ -284,7 +274,7 @@
         progress += baseIncrement;
         totalDistanceKm = progress * maxDistance;
 
-        // CEK HINGGA LINTASAN HABIS TOTAL (progress >= 1.0)
+        // BERGERAK SAMPAI SELURUH LINTASAN HABIS TOTAL (progress >= 1.0)
         if (progress >= 1.0) {
           progress = 1.0;
           isRunning = false;
@@ -297,8 +287,7 @@
       }
 
       distText.innerText = totalDistanceKm.toFixed(2);
-      speedText.innerText = Math.round(currentSpeed * 100);
-      staminaText.innerText = Math.round(stamina);
+      speedText.innerText = "100";
 
       render();
 
@@ -328,10 +317,8 @@
       const selectedTrack = trackSelect.value;
       maxDistance = selectedTrack === 'infinite' ? Infinity : parseFloat(selectedTrack);
       
-      progress = maxDistance === Infinity ? 0.5 : 0; // Mulai tepat di titik awal 0
+      progress = maxDistance === Infinity ? 0.5 : 0; // Mulai tepat di titik awal 0 (ujung kanan)
       totalDistanceKm = 0;
-      stamina = 100;
-      currentSpeed = 1;
       infiniteOffset = 0;
       animStep = 0;
       isRunning = true;
