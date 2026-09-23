@@ -9,9 +9,24 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .runner-item {
-            transition: transform 0.1s linear;
+        /* Membalikkan orientasi horizontal emoji agar menghadap dan bergerak maju ke kanan */
+        .flip-facing-right {
+            display: inline-block;
+            transform: scaleX(-1);
         }
+        
+        /* Animasi lintasan bergerak untuk mode tak terbatas */
+        .infinite-track {
+            background-image: repeating-linear-gradient(90deg, #334155 0px, #334155 20px, #1e293b 20px, #1e293b 40px);
+            background-size: 40px 100%;
+            animation: moveTrack 0.5s linear infinite;
+        }
+        
+        @keyframes moveTrack {
+            0% { background-position: 0 0; }
+            100% { background-position: -40px 0; }
+        }
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -29,7 +44,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Header Banner dengan Logo BBGTK DIY & Maskot Si Yo -->
+    <!-- Header Banner -->
     <header class="bg-blue-900 text-white shadow-lg sticky top-0 z-50 border-b-4 border-amber-400">
         <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
             
@@ -80,7 +95,7 @@
                     <span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold" id="selected-count">0 Terpilih</span>
                 </div>
 
-                <div class="grid grid-cols-1 gap-2 max-h-[380px] overflow-y-auto pr-1" id="object-selector-container">
+                <div class="grid grid-cols-1 gap-2 max-h-[340px] overflow-y-auto pr-1" id="object-selector-container">
                     <!-- Dynamic Object Items Rendered by JS -->
                 </div>
             </div>
@@ -108,14 +123,13 @@
 
                     <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200">
                         <div class="font-bold text-amber-900 flex justify-between items-center mb-1">
-                            <span>Jarak Lintasan:</span>
+                            <span>Jarak Lintasan Rute:</span>
                             <span id="route-distance-text" class="text-sm font-black">65 km</span>
                         </div>
-                        <p class="text-[11px] text-amber-800">Perhitungan asumsi kecepatan konstan tanpa hambatan lalu lintas/makan/istirahat.</p>
                     </div>
 
                     <!-- Ringkasan Waktu Tempuh Objek Terpilih -->
-                    <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 border-t pt-2" id="travel-time-results">
+                    <div class="space-y-1.5 max-h-[140px] overflow-y-auto pr-1 border-t pt-2" id="travel-time-results">
                         <!-- Rendered by JS -->
                     </div>
                 </div>
@@ -126,28 +140,43 @@
         <!-- KANAN: Lintasan Balap & Visualisasi Kecepatan (7 Kolom) -->
         <section class="lg:col-span-7 flex flex-col gap-4">
 
-            <!-- Kontrol Utama Balapan -->
-            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <button id="btn-start" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
-                        <i data-lucide="play" class="w-4 h-4"></i> Mulai Balapan
-                    </button>
-                    <button id="btn-pause" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
-                        <i data-lucide="pause" class="w-4 h-4"></i> Jeda
-                    </button>
-                    <button id="btn-reset" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs md:text-sm rounded-lg transition">
-                        Reset
-                    </button>
+            <!-- Kontrol Utama Balapan & Opsi Pengaturan Lintasan -->
+            <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 flex flex-col gap-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <button id="btn-start" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
+                            <i data-lucide="play" class="w-4 h-4"></i> Mulai
+                        </button>
+                        <button id="btn-pause" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs md:text-sm rounded-lg shadow flex items-center gap-1.5 transition">
+                            <i data-lucide="pause" class="w-4 h-4"></i> Jeda
+                        </button>
+                        <button id="btn-reset" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs md:text-sm rounded-lg transition">
+                            Reset
+                        </button>
+                    </div>
+
+                    <!-- Opsi Mode Skala Visual -->
+                    <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border text-xs">
+                        <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-relative">
+                            <input type="radio" name="scale-mode" value="relative" checked class="hidden"> Mode Visual
+                        </label>
+                        <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-real">
+                            <input type="radio" name="scale-mode" value="real" class="hidden"> Skala Nyata
+                        </label>
+                    </div>
                 </div>
 
-                <!-- Opsi Mode Skala Visual -->
-                <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border text-xs">
-                    <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-relative">
-                        <input type="radio" name="scale-mode" value="relative" checked class="hidden"> Mode Balap
-                    </label>
-                    <label class="cursor-pointer px-2 py-1 rounded font-bold transition select-none" id="label-mode-real">
-                        <input type="radio" name="scale-mode" value="real" class="hidden"> Skala Nyata (Linier)
-                    </label>
+                <!-- Pengaturan Jarak Lintasan Balap -->
+                <div class="flex items-center justify-between border-t pt-2.5 text-xs">
+                    <span class="font-bold text-slate-700 flex items-center gap-1">
+                        <i data-lucide="ruler" class="w-4 h-4 text-blue-600"></i> Jarak Lintasan Balap:
+                    </span>
+                    <select id="track-length-select" class="bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 font-bold text-slate-800 outline-none">
+                        <option value="1000">1 Kilometer (1.000 m)</option>
+                        <option value="5000">5 Kilometer (5.000 m)</option>
+                        <option value="10000">10 Kilometer (10.000 m)</option>
+                        <option value="infinite">Tak Berbatas (Endless Run)</option>
+                    </select>
                 </div>
             </div>
 
@@ -156,22 +185,22 @@
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
                         <i data-lucide="flag" class="text-emerald-600 w-5 h-5"></i>
-                        Lintasan Balap Simulasi
+                        Arena Lintasan Balap
                     </h2>
                     <span class="text-xs font-mono font-bold bg-slate-800 text-emerald-400 px-2.5 py-1 rounded" id="timer-display">
-                        00:00.0s
+                        Waktu: 00:00.0s
                     </span>
                 </div>
 
                 <!-- Track Canvas Container -->
-                <div class="bg-slate-900 rounded-xl p-3 border-2 border-slate-800 flex-1 flex flex-col gap-3 min-h-[400px] relative overflow-hidden" id="race-tracks-container">
+                <div class="bg-slate-900 rounded-xl p-3 border-2 border-slate-800 flex-1 flex flex-col gap-3 min-h-[420px] relative overflow-hidden" id="race-tracks-container">
                     <!-- Dynamic Race Lanes Rendered by JS -->
                 </div>
 
                 <div class="mt-3 text-[11px] text-slate-500 flex justify-between items-center px-1">
-                    <span>Garis Start (0m)</span>
-                    <span class="font-semibold text-slate-600">Simulasi Lintasan 100 Meter</span>
-                    <span>Garis Finish (100m)</span>
+                    <span>Mulai (0 km)</span>
+                    <span class="font-semibold text-slate-600" id="track-info-footer">Lintasan 1 Km dengan Faktor Kelelahan / Bensin</span>
+                    <span id="track-finish-label">Garis Finish (1 km)</span>
                 </div>
             </div>
 
@@ -181,35 +210,39 @@
 
     <!-- SCRIPT LOGIKA SIMULASI KECEPATAN -->
     <script>
-        // Master Repository Data Objek & Kecepatan (km/jam)
+        // Master Data Objek & Kecepatan (km/jam) serta Kapasitas Daya Tahan
         const SPEED_DATA = [
-            { id: 'manusia', name: 'Manusia', icon: '🚶', walkSpeed: 5, runSpeed: 20, hasModes: true, mode: 'walk' },
-            { id: 'anjing', name: 'Anjing', icon: '🐕', walkSpeed: 4, runSpeed: 45, hasModes: true, mode: 'run' },
-            { id: 'kucing', name: 'Kucing', icon: '🐈', walkSpeed: 3, runSpeed: 48, hasModes: true, mode: 'run' },
-            { id: 'kuda', name: 'Kuda', icon: '🐎', walkSpeed: 6, runSpeed: 70, hasModes: true, mode: 'run' },
-            { id: 'cheetah', name: 'Cheetah', icon: '🐆', walkSpeed: 7, runSpeed: 120, hasModes: true, mode: 'run' },
-            { id: 'sepeda', name: 'Sepeda Ontel / Santai', icon: '🚲', speed: 15, hasModes: false },
-            { id: 'motor', name: 'Sepeda Motor Harian', icon: '🛵', speed: 60, hasModes: false },
-            { id: 'motogp', name: 'Sepeda Motor Balap (MotoGP)', icon: '🏍️', speed: 350, hasModes: false },
-            { id: 'mobil', name: 'Mobil / Bus Intercity', icon: '🚌', speed: 90, hasModes: false },
-            { id: 'kereta', name: 'Kereta Cepat (Whoosh)', icon: '🚆', speed: 350, hasModes: false },
-            { id: 'pesawat', name: 'Pesawat Komersial', icon: '✈️', speed: 900, hasModes: false },
-            { id: 'roket', name: 'Apolo / Roket Luar Angkasa', icon: '🚀', speed: 28000, hasModes: false }
+            { id: 'manusia', name: 'Manusia', icon: '🚶', walkSpeed: 5, runSpeed: 20, hasModes: true, mode: 'walk', type: 'living', staminaMax: 10 },
+            { id: 'anjing', name: 'Anjing', icon: '🐕', walkSpeed: 4, runSpeed: 45, hasModes: true, mode: 'run', type: 'living', staminaMax: 8 },
+            { id: 'kucing', name: 'Kucing', icon: '🐈', walkSpeed: 3, runSpeed: 48, hasModes: true, mode: 'run', type: 'living', staminaMax: 5 },
+            { id: 'kuda', name: 'Kuda', icon: '🐎', walkSpeed: 6, runSpeed: 70, hasModes: true, mode: 'run', type: 'living', staminaMax: 25 },
+            { id: 'cheetah', name: 'Cheetah', icon: '🐆', walkSpeed: 7, runSpeed: 120, hasModes: true, mode: 'run', type: 'living', staminaMax: 2 },
+            { id: 'sepeda', name: 'Sepeda Ontel', icon: '🚲', speed: 15, hasModes: false, type: 'living', staminaMax: 20 },
+            { id: 'motor', name: 'Sepeda Motor Harian', icon: '🛵', speed: 60, hasModes: false, type: 'machine', fuelMax: 150 },
+            { id: 'motogp', name: 'Motor Balap (MotoGP)', icon: '🏍️', speed: 350, hasModes: false, type: 'machine', fuelMax: 100 },
+            { id: 'mobil', name: 'Mobil / Bus', icon: '🚌', speed: 90, hasModes: false, type: 'machine', fuelMax: 400 },
+            { id: 'kereta', name: 'Kereta Cepat Whoosh', icon: '🚆', speed: 350, hasModes: false, type: 'machine', fuelMax: 800 },
+            { id: 'pesawat', name: 'Pesawat Komersial', icon: '✈️', speed: 900, hasModes: false, type: 'machine', fuelMax: 2000 },
+            { id: 'roket', name: 'Apolo / Roket', icon: '🚀', speed: 28000, hasModes: false, type: 'machine', fuelMax: 5000 }
         ];
 
         // State Aplikasi
         let appState = {
             selectedIds: ['manusia', 'motor', 'motogp', 'cheetah'],
             scaleMode: 'relative',
+            trackLength: 1000, // meter, 'infinite' jika tak terbatas
             isRunning: false,
-            elapsedTime: 0,
+            elapsedTime: 0, // detik
             timerInterval: null,
             routeDistance: 65,
-            positions: {}
+            
+            // Sim Data Per Objek
+            simData: {} // distance, currentSpeed, staminaFuel %
         };
 
         // Inisialisasi
         document.addEventListener('DOMContentLoaded', () => {
+            resetSimData();
             renderObjectSelector();
             renderRaceTracks();
             updateTravelTimeCalculations();
@@ -217,7 +250,17 @@
             lucide.createIcons();
         });
 
-        // Render Panel Pemilihan Objek di Sisi Kiri
+        function resetSimData() {
+            appState.selectedIds.forEach(id => {
+                appState.simData[id] = {
+                    distance: 0, // meter
+                    staminaFuel: 100, // %
+                    isFinished: false
+                };
+            });
+        }
+
+        // Render Panel Pemilihan Objek
         function renderObjectSelector() {
             const container = document.getElementById('object-selector-container');
             container.innerHTML = '';
@@ -261,24 +304,23 @@
             document.getElementById('selected-count').innerText = `${appState.selectedIds.length} Terpilih`;
         }
 
-        // Toggle Pemilihan Objek
         function toggleSelectObject(id) {
             if (appState.selectedIds.includes(id)) {
                 if (appState.selectedIds.length <= 1) {
-                    alert('Pilih setidaknya satu objek untuk dibandingkan!');
+                    alert('Pilih setidaknya satu objek!');
                     return;
                 }
                 appState.selectedIds = appState.selectedIds.filter(item => item !== id);
+                delete appState.simData[id];
             } else {
                 appState.selectedIds.push(id);
+                appState.simData[id] = { distance: 0, staminaFuel: 100, isFinished: false };
             }
-            appState.positions[id] = 0;
             renderObjectSelector();
             renderRaceTracks();
             updateTravelTimeCalculations();
         }
 
-        // Toggle Mode Jalan vs Lari
         function setMode(id, mode) {
             const item = SPEED_DATA.find(s => s.id === id);
             if (item) {
@@ -289,7 +331,7 @@
             }
         }
 
-        // Render Lintasan Balap Vertikal di Sisi Kanan
+        // Render Arena Lintasan
         function renderRaceTracks() {
             const container = document.getElementById('race-tracks-container');
             container.innerHTML = '';
@@ -301,31 +343,54 @@
 
             appState.selectedIds.forEach(id => {
                 const item = SPEED_DATA.find(s => s.id === id);
-                const currentSpeed = item.hasModes 
+                const sim = appState.simData[id] || { distance: 0, staminaFuel: 100 };
+                const baseSpeed = item.hasModes 
                     ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
                     : item.speed;
 
-                const pos = appState.positions[id] || 0;
+                // Hitung posisi visual % pada lintasan (max 88% agar tidak kelewatan)
+                let posPercent = 0;
+                if (appState.trackLength !== 'infinite') {
+                    posPercent = Math.min(88, (sim.distance / appState.trackLength) * 88);
+                } else {
+                    // Pada mode infinite, posisi visual disesuaikan dengan log posisi
+                    posPercent = Math.min(88, (Math.log10(sim.distance + 1) / 5) * 88);
+                }
 
                 const lane = document.createElement('div');
-                lane.className = 'bg-slate-800/90 rounded-lg p-2 border border-slate-700 flex flex-col justify-between relative min-h-[64px]';
+                lane.className = 'bg-slate-800/90 rounded-lg p-2.5 border border-slate-700 flex flex-col justify-between relative min-h-[72px]';
+
+                // Hitung Kecepatan Efektif Saat Ini (Mempertimbangkan Kelelahan/Bensin)
+                const currentEffSpeed = Math.round(baseSpeed * (sim.staminaFuel / 100));
 
                 lane.innerHTML = `
                     <div class="flex justify-between items-center text-xs font-bold text-slate-300 mb-1 z-10">
                         <span class="flex items-center gap-1.5 text-white">
-                            <span class="text-lg">${item.icon}</span> ${item.name} ${item.hasModes ? `(${item.mode === 'walk' ? 'Berjalan' : 'Berlari'})` : ''}
+                            <span class="text-lg">${item.icon}</span> ${item.name}
                         </span>
-                        <span class="text-amber-400 font-mono">${currentSpeed} km/jam</span>
+                        <div class="flex items-center gap-3">
+                            <!-- Indikator Stamina / Bensin -->
+                            <div class="flex items-center gap-1 text-[10px] text-slate-400">
+                                <span>${item.type === 'living' ? 'Stamina:' : 'Bensin:'}</span>
+                                <div class="w-12 bg-slate-700 h-2 rounded-full overflow-hidden">
+                                    <div class="${sim.staminaFuel > 30 ? 'bg-emerald-500' : 'bg-red-500'} h-full" style="width: ${sim.staminaFuel}%"></div>
+                                </div>
+                            </div>
+                            <span class="text-amber-400 font-mono">${currentEffSpeed} km/jam</span>
+                        </div>
                     </div>
 
                     <!-- Track Lane Line & Runner Sprite -->
-                    <div class="w-full bg-slate-950 h-7 rounded-full relative overflow-hidden border border-slate-700 flex items-center px-1">
-                        <!-- Finish Line Flag Bar -->
-                        <div class="absolute right-2 top-0 bottom-0 w-1.5 bg-amber-400/80 z-0"></div>
+                    <div class="w-full bg-slate-950 h-8 rounded-full relative overflow-hidden border border-slate-700 flex items-center px-1 ${appState.trackLength === 'infinite' && appState.isRunning ? 'infinite-track' : ''}">
+                        
+                        ${appState.trackLength !== 'infinite' ? `<div class="absolute right-2 top-0 bottom-0 w-1.5 bg-amber-400/80 z-0"></div>` : ''}
 
-                        <!-- Runner Icon Position -->
-                        <div class="runner-item absolute left-1 flex items-center gap-1 text-xl z-10" style="transform: translateX(${pos}%); transition: transform 0.1s linear;">
-                            <span>${item.icon}</span>
+                        <!-- Runner Icon Position (Menghadap Kanan) -->
+                        <div class="absolute left-1 flex items-center gap-1.5 text-xl z-10 transition-all duration-100" style="transform: translateX(${posPercent * 7}px);">
+                            <span class="flip-facing-right">${item.icon}</span>
+                            <span class="text-[10px] font-bold text-emerald-400 bg-slate-900/90 px-1 rounded border border-slate-700">
+                                ${formatDistance(sim.distance)}
+                            </span>
                         </div>
                     </div>
                 `;
@@ -334,7 +399,14 @@
             });
         }
 
-        // Kalkulator Estimasi Waktu Tempuh Rute Antarkota
+        function formatDistance(distMeters) {
+            if (distMeters >= 1000) {
+                return (distMeters / 1000).toFixed(2) + ' km';
+            }
+            return Math.floor(distMeters) + ' m';
+        }
+
+        // Kalkulator Estimasi Rute
         function updateTravelTimeCalculations() {
             const resultsContainer = document.getElementById('travel-time-results');
             resultsContainer.innerHTML = '';
@@ -375,42 +447,57 @@
             });
         }
 
-        // Event Listeners & Kontrol Timer
+        // Event Listeners & Kontrol
         function setupEventListeners() {
-            // Button Start
             document.getElementById('btn-start').onclick = () => {
                 if (!appState.isRunning) {
                     appState.isRunning = true;
-                    startSimTimer();
+                    startSimLoop();
                 }
             };
 
-            // Button Pause
             document.getElementById('btn-pause').onclick = () => {
                 appState.isRunning = false;
                 clearInterval(appState.timerInterval);
+                renderRaceTracks();
             };
 
-            // Button Reset
             document.getElementById('btn-reset').onclick = () => {
                 appState.isRunning = false;
                 clearInterval(appState.timerInterval);
                 appState.elapsedTime = 0;
-                appState.selectedIds.forEach(id => appState.positions[id] = 0);
-                document.getElementById('timer-display').innerText = '00:00.0s';
+                resetSimData();
+                document.getElementById('timer-display').innerText = 'Waktu: 00:00.0s';
                 renderRaceTracks();
             };
 
-            // Mode Skala Visual (Balap vs Nyata)
             document.querySelectorAll('input[name="scale-mode"]').forEach(radio => {
                 radio.onchange = (e) => {
                     appState.scaleMode = e.target.value;
                     updateModeLabelStyling();
                 };
             });
-            updateModeLabelStyling();
 
-            // Select Route City
+            document.getElementById('track-length-select').onchange = (e) => {
+                const val = e.target.value;
+                appState.trackLength = val === 'infinite' ? 'infinite' : parseInt(val);
+                
+                const footerInfo = document.getElementById('track-info-footer');
+                const finishLabel = document.getElementById('track-finish-label');
+                
+                if (val === 'infinite') {
+                    footerInfo.innerText = 'Mode Tak Berbatas (Endless Run) dengan Penurun Stamina/Bensin';
+                    finishLabel.innerText = 'Tanpa Batas ∞';
+                } else {
+                    const kmVal = parseInt(val) / 1000;
+                    footerInfo.innerText = `Lintasan ${kmVal} Km dengan Pengaruh Daya Tahan`;
+                    finishLabel.innerText = `Garis Finish (${kmVal} km)`;
+                }
+
+                resetSimData();
+                renderRaceTracks();
+            };
+
             document.getElementById('route-select').onchange = (e) => {
                 appState.routeDistance = parseInt(e.target.value);
                 updateTravelTimeCalculations();
@@ -430,45 +517,66 @@
             }
         }
 
-        // Loop Simulasi Pergerakan Balapan
-        function startSimTimer() {
+        // Timer Loop Utama
+        function startSimLoop() {
             clearInterval(appState.timerInterval);
 
             appState.timerInterval = setInterval(() => {
                 if (!appState.isRunning) return;
 
                 appState.elapsedTime += 0.1;
-                document.getElementById('timer-display').innerText = `${appState.elapsedTime.toFixed(1)}s`;
+                document.getElementById('timer-display').innerText = `Waktu: ${appState.elapsedTime.toFixed(1)}s`;
 
                 let allFinished = true;
 
                 appState.selectedIds.forEach(id => {
                     const item = SPEED_DATA.find(s => s.id === id);
-                    const speed = item.hasModes 
+                    const sim = appState.simData[id];
+
+                    if (sim.isFinished) return;
+
+                    const baseSpeedKmH = item.hasModes 
                         ? (item.mode === 'walk' ? item.walkSpeed : item.runSpeed)
                         : item.speed;
 
-                    let stepIncrement = 0;
+                    // Pengaruh Kelelahan / Kebakaran Bensin
+                    const maxCap = item.type === 'living' ? item.staminaMax : item.fuelMax;
+                    const kmTraveled = sim.distance / 1000;
+                    
+                    // Hitung sisa stamina/bensin
+                    let remainingPct = Math.max(10, 100 - ((kmTraveled / maxCap) * 90));
+                    sim.staminaFuel = remainingPct;
 
+                    // Kecepatan riil terpengaruh stamina (m/s)
+                    const effSpeedKmH = baseSpeedKmH * (remainingPct / 100);
+                    const speedMeterPerSec = (effSpeedKmH * 1000) / 3600;
+
+                    // Pertambahan jarak per 100ms
+                    let distStep = speedMeterPerSec * 0.1;
+                    
                     if (appState.scaleMode === 'relative') {
-                        stepIncrement = (Math.log10(speed + 1) * 1.5);
-                    } else {
-                        stepIncrement = (speed / 100) * 1.2;
+                        // Pada mode visual, dipercepat sedikit agar menarik ditonton
+                        distStep = distStep * 3;
                     }
 
-                    if (!appState.positions[id]) appState.positions[id] = 0;
-                    
-                    if (appState.positions[id] < 92) {
-                        appState.positions[id] += stepIncrement;
-                        allFinished = false;
+                    sim.distance += distStep;
+
+                    // Cek Finish jika bukan mode tak terbatas
+                    if (appState.trackLength !== 'infinite') {
+                        if (sim.distance >= appState.trackLength) {
+                            sim.distance = appState.trackLength;
+                            sim.isFinished = true;
+                        } else {
+                            allFinished = false;
+                        }
                     } else {
-                        appState.positions[id] = 92;
+                        allFinished = false;
                     }
                 });
 
                 renderRaceTracks();
 
-                if (allFinished) {
+                if (allFinished && appState.trackLength !== 'infinite') {
                     appState.isRunning = false;
                     clearInterval(appState.timerInterval);
                 }
