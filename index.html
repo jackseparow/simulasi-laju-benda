@@ -3,313 +3,710 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulasi Pergerakan Lintasan</title>
+  <title>Simulasi Laju Benda 10 KM - Taman Numerasi BBGTK DIY</title>
   <style>
-    body {
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f2f5;
+    }
+    body {
+      background-color: #f4f7f6;
+      color: #333;
+      padding: 15px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
-      margin: 0;
     }
-    #controls {
-      background: white;
-      padding: 15px 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      margin-bottom: 15px;
+    
+    /* Header Header BBGTK & Si Yo */
+    header {
+      width: 100%;
+      max-width: 1100px;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 12px 25px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       display: flex;
-      gap: 15px;
+      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
+      margin-bottom: 15px;
     }
-    label {
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-title {
+      text-align: center;
+    }
+    .header-title h1 {
+      font-size: 20px;
+      color: #1a365d;
+      letter-spacing: 0.5px;
+    }
+    .header-title p {
+      font-size: 13px;
+      color: #4a5568;
+      font-weight: 600;
+    }
+    .logo-img {
+      height: 50px;
+      object-fit: contain;
+    }
+    .mascot-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ebf8ff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid #bee3f8;
+    }
+    .mascot-box span {
       font-weight: bold;
-      color: #333;
-    }
-    select, button {
-      padding: 8px 12px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+      color: #2b6cb0;
       font-size: 14px;
-      cursor: pointer;
     }
-    button {
-      background-color: #007bff;
-      color: white;
-      border: none;
+
+    /* Controls Section */
+    .controls-card {
+      width: 100%;
+      max-width: 1100px;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 18px 22px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-bottom: 15px;
+    }
+    .controls-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 2px solid #edf2f7;
+      padding-bottom: 8px;
+    }
+    .controls-header h2 {
+      font-size: 16px;
+      color: #2d3748;
+    }
+
+    /* Object Selector Grid */
+    .object-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 5px;
+      margin-bottom: 15px;
+    }
+    .object-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
       transition: background 0.2s;
     }
-    button:hover {
-      background-color: #0056b3;
+    .object-item:hover {
+      background: #edf2f7;
     }
-    #canvas-container {
-      position: relative;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      border-radius: 10px;
-      overflow: hidden;
-      background: #eef9bf;
+    .object-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    canvas {
-      display: block;
+    .object-info input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
     }
-    #stats {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.85);
+    .object-label {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    .mode-select {
+      font-size: 11.5px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e0;
+      background: white;
+    }
+
+    /* Action Toolbar */
+    .action-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #f7fafc;
       padding: 10px 15px;
+      border-radius: 8px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      padding: 8px 16px;
       border-radius: 6px;
-      font-size: 14px;
+      border: none;
       font-weight: bold;
-      color: #222;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #3182ce; color: white; }
+    .btn-primary:hover { background: #2b6cb0; }
+    .btn-secondary { background: #e2e8f0; color: #4a5568; }
+    .btn-secondary:hover { background: #cbd5e0; }
+    .btn-danger { background: #e53e3e; color: white; }
+    .btn-danger:hover { background: #c53030; }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .speed-control select {
+      padding: 5px 8px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e0;
+    }
+
+    /* Simulation Canvas & Stats Container */
+    .sim-container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    #canvas-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      position: relative;
+    }
+
+    .track-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #4a5568;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      background: #f8fafc;
+      border-radius: 8px;
+      display: block;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Stats & Leaderboard Card */
+    .stats-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .stats-card h3 {
+      font-size: 15px;
+      color: #2d3748;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #edf2f7;
+      padding-bottom: 6px;
+    }
+    
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .stats-table th, .stats-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .stats-table th {
+      background: #f7fafc;
+      color: #718096;
+      font-weight: 600;
+    }
+
+    /* Modal dialog */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .modal-content h3 {
+      color: #2b6cb0;
+      margin-bottom: 12px;
     }
   </style>
 </head>
 <body>
 
-  <div id="controls">
-    <label>Lintasan: <strong>5.00 km</strong></label>
+  <!-- Header Header BBGTK & Si Yo -->
+  <header>
+    <div class="header-left">
+      <div class="mascot-box">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2b6cb0" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Si Yo (Taman Numerasi)</span>
+      </div>
+    </div>
+    
+    <div class="header-title">
+      <h1>SIMULASI LAJU BENDA</h1>
+      <p>Eksplorasi Perbandingan Kecepatan Lintasan 10 KM (Kanan ke Kiri)</p>
+    </div>
 
-    <label for="objectSelect">Pilih Objek:</label>
-    <select id="objectSelect">
-      <option value="kuda">Kuda (Hewan)</option>
-      <option value="manusia">Pelari (Manusia)</option>
-      <option value="mobil">Mobil (Kendaraan)</option>
-    </select>
+    <div class="header-right">
+      <div style="text-align: right; margin-right: 8px;">
+        <div style="font-weight: bold; font-size: 13px; color: #1a365d;">BBGTK DIY</div>
+        <div style="font-size: 10px; color: #718096;">Kemendikbudristek</div>
+      </div>
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="#3182ce"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+  </header>
 
-    <button id="btnStart">Mulai / Reset</button>
+  <!-- Controls Panel -->
+  <div class="controls-card">
+    <div class="controls-header">
+      <h2>Pilih Objek Perbandingan</h2>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-secondary" onclick="selectAll(true)">Pilih Semua</button>
+        <button class="btn-secondary" onclick="selectAll(false)">Hapus Semua</button>
+      </div>
+    </div>
+
+    <div class="object-grid" id="objectGrid">
+      <!-- Generated Dynamically -->
+    </div>
+
+    <div class="action-toolbar">
+      <div class="btn-group">
+        <button id="btnStart" class="btn-primary" onclick="toggleSimulation()">Mulai Balapan</button>
+        <button id="btnReset" class="btn-danger" onclick="resetSimulation()">Reset</button>
+      </div>
+
+      <div class="speed-control">
+        <label for="simSpeed">Pengali Waktu Simulasi:</label>
+        <select id="simSpeed" onchange="updateSimSpeed()">
+          <option value="1">1x (Waktu Nyata)</option>
+          <option value="10">10x Lebih Cepat</option>
+          <option value="50">50x Lebih Cepat</option>
+          <option value="100" selected>100x Lebih Cepat</option>
+          <option value="300">300x Lebih Cepat</option>
+        </select>
+      </div>
+    </div>
   </div>
 
-  <div id="canvas-container">
-    <canvas id="simCanvas" width="800" height="400"></canvas>
-    <div id="stats">
-      Jarak Tempuh: <span id="distText">0.00</span> / 5.00 km<br>
-      Kecepatan: <span id="speedText">100</span>%
+  <!-- Simulation Area -->
+  <div class="sim-container">
+    <div id="canvas-card">
+      <div class="track-info">
+        <span>Garis Finish (10.00 km - Kiri)</span>
+        <span id="timerDisplay">Waktu Simulasi: 00:00:00</span>
+        <span>Garis Start (0.00 km - Kanan)</span>
+      </div>
+      <canvas id="simCanvas" width="1000" height="400"></canvas>
+    </div>
+
+    <!-- Leaderboard / Stats -->
+    <div class="stats-card">
+      <h3>Klasemen & Statistik Laju Benda</h3>
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Objek / Benda</th>
+            <th>Mode</th>
+            <th>Kecepatan Real (km/h)</th>
+            <th>Jarak Tempuh (km)</th>
+            <th>Waktu Tempuh</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="statsTableBody">
+          <!-- Dynamically Updated -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div id="resultModal" class="modal">
+    <div class="modal-content">
+      <h3>Hasil Simulasi Balapan (10 KM)</h3>
+      <p id="modalBodyText">Semua objek telah menyelesaikan lintasan.</p>
+      <br>
+      <button class="btn-primary" onclick="closeModal()">Tutup</button>
     </div>
   </div>
 
   <script>
+    // Database Objek & Kecepatan (km/h)
+    const objectDefinitions = [
+      { id: 'roket', name: 'Roket (SpaceX Falcon)', speedWalk: 28000, speedRun: 28000, color: '#e53e3e', isLiving: false, icon: '🚀' },
+      { id: 'pesawat', name: 'Pesawat Terbang', speedWalk: 900, speedRun: 900, color: '#3182ce', isLiving: false, icon: '✈️' },
+      { id: 'motogp', name: 'Motor Racing (MotoGP)', speedWalk: 350, speedRun: 350, color: '#dd6b20', isLiving: false, icon: '🏍️' },
+      { id: 'kereta', name: 'Kereta Api (KAI Express)', speedWalk: 120, speedRun: 120, color: '#805ad5', isLiving: false, icon: '🚆' },
+      { id: 'cheetah', name: 'Cheetah', speedWalk: 10, speedRun: 110, color: '#d69e2e', isLiving: true, icon: '🐆' },
+      { id: 'sepedamotor', name: 'Sepeda Motor (Harian)', speedWalk: 60, speedRun: 60, color: '#319795', isLiving: false, icon: '🛵' },
+      { id: 'mobil', name: 'Mobil (Sedan/SUV)', speedWalk: 80, speedRun: 80, color: '#e53e3e', isLiving: false, icon: '🚗' },
+      { id: 'bus', name: 'Bus Antarkota', speedWalk: 70, speedRun: 70, color: '#d69e2e', isLiving: false, icon: '🚌' },
+      { id: 'kuda', name: 'Kuda', speedWalk: 6, speedRun: 48, color: '#744210', isLiving: true, icon: '🐎' },
+      { id: 'anjing', name: 'Anjing (Greyhound)', speedWalk: 5, speedRun: 60, color: '#a0aec0', isLiving: true, icon: '🐕' },
+      { id: 'sepeda', name: 'Sepeda Onthel', speedWalk: 15, speedRun: 15, color: '#319795', isLiving: false, icon: '🚲' },
+      { id: 'manusia', name: 'Pelari / Manusia', speedWalk: 4.5, speedRun: 25, color: '#4299e1', isLiving: true, icon: '🏃' },
+      { id: 'kurakura', name: 'Kura-kura', speedWalk: 0.2, speedRun: 0.8, color: '#38a169', isLiving: true, icon: '🐢' }
+    ];
+
+    const TRACK_DISTANCE_KM = 10.0;
+    let selectedObjects = [];
+    let isRunning = false;
+    let simTimeSeconds = 0;
+    let simSpeedMultiplier = 100;
+    let lastTimestamp = 0;
+    let animFrameId = null;
+
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
 
-    const objectSelect = document.getElementById('objectSelect');
-    const btnStart = document.getElementById('btnStart');
-    const distText = document.getElementById('distText');
-    const speedText = document.getElementById('speedText');
+    // Initialize UI Grid
+    function initObjectGrid() {
+      const grid = document.getElementById('objectGrid');
+      grid.innerHTML = '';
 
-    // Jarak Lintasan Ditetapkan 5.00 km
-    const TOTAL_TRACK_KM = 5.0; 
-    let progress = 0;           // 0.0 (Batas Kanan / 0 km) -> 1.0 (Batas Kiri / 5 km)
-    let isRunning = false;
-    let animFrameId = null;
-    let animStep = 0;           
+      objectDefinitions.forEach((obj, idx) => {
+        const item = document.createElement('div');
+        item.className = 'object-item';
 
-    // Posisi Titik Lintasan Presisi (t = 0 di X=800 Kanan, t = 1 di X=0 Kiri)
-    function getPathPoint(t) {
-      const posX = canvas.width - (t * canvas.width);
-      const posY = 200 + Math.sin(t * 4 * Math.PI) * 60 + Math.cos(t * 2 * Math.PI) * 30;
-      return { x: posX, y: posY };
+        const isChecked = idx < 5; // Select first 5 default
+        
+        let modeHtml = '';
+        if (obj.isLiving) {
+          modeHtml = `
+            <select class="mode-select" id="mode_${obj.id}" onchange="updateObjectMode('${obj.id}')">
+              <option value="run" selected>Berlari</option>
+              <option value="walk">Berjalan</option>
+            </select>
+          `;
+        }
+
+        item.innerHTML = `
+          <div class="object-info">
+            <input type="checkbox" id="chk_${obj.id}" ${isChecked ? 'checked' : ''} onchange="toggleObjectSelect('${obj.id}')">
+            <label for="chk_${obj.id}" class="object-label">${obj.icon} ${obj.name}</label>
+          </div>
+          ${modeHtml}
+        `;
+        grid.appendChild(item);
+      });
+
+      updateSelectedObjects();
     }
 
-    // Menggambar Lintasan
-    function drawTrack() {
-      ctx.beginPath();
-      ctx.lineWidth = 14;
-      ctx.strokeStyle = '#8d6e63';
-      ctx.lineCap = 'round';
-
-      for (let i = 0; i <= 200; i++) {
-        const t = i / 200;
-        const pt = getPathPoint(t);
-        if (i === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      }
-      ctx.stroke();
-
-      // Garis Tengah Putus-putus
-      ctx.beginPath();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#ffffff';
-      ctx.setLineDash([8, 8]);
-      for (let i = 0; i <= 200; i++) {
-        const t = i / 200;
-        const pt = getPathPoint(t);
-        if (i === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
+    function toggleObjectSelect(id) {
+      updateSelectedObjects();
     }
 
-    // Menggambar Objek Menghadap Arah Gerak (Kiri)
-    function drawObject(x, y, angle, type) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-      
-      // Dibalik melintang horizontal agar gambar menghadap ke kiri
-      ctx.scale(-1, 1);
-
-      if (type === 'kuda') {
-        const legSwing = Math.sin(animStep * 10) * 12;
-        const headBob = Math.cos(animStep * 10) * 3;
-
-        ctx.fillStyle = '#6d4c41';
-        ctx.fillRect(-20, -10, 35, 18);
-        ctx.fillRect(10, -20 + headBob, 10, 15);
-        ctx.fillRect(12, -25 + headBob, 12, 8);
-
-        ctx.fillStyle = '#3e2723';
-        ctx.fillRect(-15 + legSwing * 0.5, 8, 5, 12);
-        ctx.fillRect(-8 - legSwing * 0.5, 8, 5, 12);
-        ctx.fillRect(2 - legSwing * 0.5, 8, 5, 12);
-        ctx.fillRect(9 + legSwing * 0.5, 8, 5, 12);
-
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(20, -23 + headBob, 3, 3);
-
-      } else if (type === 'manusia') {
-        const swing = Math.sin(animStep * 12) * 14;
-
-        ctx.fillStyle = '#e0a96d';
-        ctx.beginPath(); 
-        ctx.arc(0, -24, 6, 0, Math.PI * 2); 
-        ctx.fill();
-
-        ctx.fillStyle = '#007bff';
-        ctx.fillRect(-5, -18, 10, 16);
-
-        ctx.strokeStyle = '#222';
-        ctx.lineWidth = 3.5;
-        ctx.lineCap = 'round';
-
-        ctx.beginPath();
-        ctx.moveTo(-2, -2);
-        ctx.lineTo(-2 - swing, 12);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(2, -2);
-        ctx.lineTo(2 + swing, 12);
-        ctx.stroke();
-
-        ctx.strokeStyle = '#e0a96d';
-        ctx.lineWidth = 2.5;
-
-        ctx.beginPath();
-        ctx.moveTo(-3, -14);
-        ctx.lineTo(-3 + swing * 0.8, -4);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(3, -14);
-        ctx.lineTo(3 - swing * 0.8, -4);
-        ctx.stroke();
-
-      } else if (type === 'mobil') {
-        const wheelAngle = animStep * 15;
-
-        ctx.fillStyle = '#d32f2f';
-        ctx.fillRect(-22, -12, 44, 16);
-        ctx.fillStyle = '#b71c1c';
-        ctx.fillRect(-10, -22, 24, 10);
-
-        const drawWheel = (wx, wy) => {
-          ctx.save();
-          ctx.translate(wx, wy);
-          ctx.rotate(wheelAngle);
-          
-          ctx.fillStyle = '#212121';
-          ctx.beginPath(); 
-          ctx.arc(0, 0, 6, 0, Math.PI * 2); 
-          ctx.fill();
-
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(-5, 0); ctx.lineTo(5, 0);
-          ctx.moveTo(0, -5); ctx.lineTo(0, 5);
-          ctx.stroke();
-
-          ctx.restore();
-        };
-
-        drawWheel(-12, 5);
-        drawWheel(12, 5);
-
-        ctx.fillStyle = '#ffeb3b';
-        ctx.fillRect(20, -8, 3, 5);
-      }
-
-      ctx.restore();
+    function updateObjectMode(id) {
+      updateSelectedObjects();
     }
 
-    // Loop Update Utama
-    function update() {
-      if (!isRunning) return;
+    function selectAll(status) {
+      objectDefinitions.forEach(obj => {
+        const chk = document.getElementById(`chk_${obj.id}`);
+        if (chk) chk.checked = status;
+      });
+      updateSelectedObjects();
+    }
 
-      // Penambahan progres berjalan konstan dan bertahap
-      const speedStep = 0.002; 
-      progress += speedStep;
-      animStep += speedStep * 10;
+    function updateSelectedObjects() {
+      selectedObjects = [];
+      objectDefinitions.forEach(obj => {
+        const chk = document.getElementById(`chk_${obj.id}`);
+        if (chk && chk.checked) {
+          const modeElem = document.getElementById(`mode_${obj.id}`);
+          const mode = modeElem ? modeElem.value : 'run';
+          const speed = mode === 'run' ? obj.speedRun : obj.speedWalk;
 
-      // Menghitung Jarak Aktual berdasarkan persentase perjalanan (0.00 km - 5.00 km)
-      const currentDistanceKm = Math.min(TOTAL_TRACK_KM, progress * TOTAL_TRACK_KM);
-      distText.innerText = currentDistanceKm.toFixed(2);
-      speedText.innerText = "100";
+          selectedObjects.push({
+            ...obj,
+            mode: mode,
+            currentSpeed: speed,
+            distanceKm: 0.0,
+            finished: false,
+            finishTime: 0
+          });
+        }
+      });
 
-      // Cek Jika Objek Telah Menyapu Layar Sampai Ujung Kiri (progress >= 1.0)
-      if (progress >= 1.0) {
-        progress = 1.0;
-        distText.innerText = TOTAL_TRACK_KM.toFixed(2);
-        isRunning = false;
-        render();
-        setTimeout(() => {
-          alert(`Selamat! Objek telah menyelesaikan seluruh lintasan sejauh ${TOTAL_TRACK_KM.toFixed(2)} km.`);
-        }, 50);
+      adjustCanvasHeight();
+      render();
+      updateStatsTable();
+    }
+
+    function adjustCanvasHeight() {
+      const laneHeight = 45;
+      const totalHeight = Math.max(250, selectedObjects.length * laneHeight + 60);
+      canvas.height = totalHeight;
+    }
+
+    function toggleSimulation() {
+      if (selectedObjects.length === 0) {
+        alert("Pilih minimal satu objek untuk memulai simulasi!");
         return;
       }
 
-      render();
+      isRunning = !isRunning;
+      const btnStart = document.getElementById('btnStart');
 
       if (isRunning) {
-        animFrameId = requestAnimationFrame(update);
+        btnStart.innerText = "Jeda (Pause)";
+        btnStart.className = "btn-secondary";
+        lastTimestamp = performance.now();
+        animFrameId = requestAnimationFrame(gameLoop);
+      } else {
+        btnStart.innerText = "Lanjutkan";
+        btnStart.className = "btn-primary";
+        if (animFrameId) cancelAnimationFrame(animFrameId);
       }
     }
 
+    function resetSimulation() {
+      isRunning = false;
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+
+      simTimeSeconds = 0;
+      document.getElementById('timerDisplay').innerText = "Waktu Simulasi: 00:00:00";
+
+      const btnStart = document.getElementById('btnStart');
+      btnStart.innerText = "Mulai Balapan";
+      btnStart.className = "btn-primary";
+
+      selectedObjects.forEach(obj => {
+        obj.distanceKm = 0.0;
+        obj.finished = false;
+        obj.finishTime = 0;
+      });
+
+      render();
+      updateStatsTable();
+    }
+
+    function updateSimSpeed() {
+      simSpeedMultiplier = parseFloat(document.getElementById('simSpeed').value);
+    }
+
+    // Main Loop Simulation
+    function gameLoop(timestamp) {
+      if (!isRunning) return;
+
+      const dt = (timestamp - lastTimestamp) / 1000; // in seconds
+      lastTimestamp = timestamp;
+
+      const simDt = dt * simSpeedMultiplier;
+      simTimeSeconds += simDt;
+
+      let allFinished = true;
+
+      selectedObjects.forEach(obj => {
+        if (!obj.finished) {
+          // speed in km/h -> km/sec
+          const speedKmPerSec = obj.currentSpeed / 3600;
+          obj.distanceKm += speedKmPerSec * simDt;
+
+          if (obj.distanceKm >= TRACK_DISTANCE_KM) {
+            obj.distanceKm = TRACK_DISTANCE_KM;
+            obj.finished = true;
+            obj.finishTime = simTimeSeconds;
+          } else {
+            allFinished = false;
+          }
+        }
+      });
+
+      formatTimerDisplay();
+      render();
+      updateStatsTable();
+
+      if (allFinished && selectedObjects.length > 0) {
+        isRunning = false;
+        document.getElementById('btnStart').innerText = "Selesai";
+        showResultModal();
+      } else {
+        animFrameId = requestAnimationFrame(gameLoop);
+      }
+    }
+
+    function formatTimerDisplay() {
+      const hrs = Math.floor(simTimeSeconds / 3600);
+      const mins = Math.floor((simTimeSeconds % 3600) / 60);
+      const secs = Math.floor(simTimeSeconds % 60);
+
+      const pad = (n) => n.toString().padStart(2, '0');
+      document.getElementById('timerDisplay').innerText = `Waktu Simulasi: ${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+    }
+
+    function formatDuration(totalSecs) {
+      if (totalSecs === 0) return "-";
+      const hrs = Math.floor(totalSecs / 3600);
+      const mins = Math.floor((totalSecs % 3600) / 60);
+      const secs = (totalSecs % 60).toFixed(1);
+
+      let res = "";
+      if (hrs > 0) res += `${hrs}j `;
+      if (mins > 0 || hrs > 0) res += `${mins}m `;
+      res += `${secs}d`;
+      return res;
+    }
+
+    // Render Canvas
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      drawTrack();
+      const startX = canvas.width - 50; // Kanan (0 KM)
+      const finishX = 50;               // Kiri (10 KM)
+      const trackLengthPx = startX - finishX;
 
-      const pt1 = getPathPoint(progress);
-      const pt2 = getPathPoint(Math.min(1.0, progress + 0.005));
+      const laneHeight = 45;
+      const startY = 40;
 
-      // Hitung sudut kemiringan jalur dari kanan ke kiri
-      const dx = pt2.x - pt1.x;
-      const dy = pt2.y - pt1.y;
-      const angle = Math.atan2(dy, dx) + Math.PI;
+      // Draw Marker Lines & Background Track
+      for (let i = 0; i <= 10; i++) {
+        const km = i;
+        const x = startX - (km / 10.0) * trackLengthPx;
 
-      drawObject(pt1.x, pt1.y, angle, objectSelect.value);
+        ctx.beginPath();
+        ctx.strokeStyle = i === 0 || i === 10 ? '#e53e3e' : '#cbd5e0';
+        ctx.lineWidth = i === 0 || i === 10 ? 2.5 : 1;
+        ctx.setLineDash(i === 0 || i === 10 ? [] : [4, 4]);
+        ctx.moveTo(x, 25);
+        ctx.lineTo(x, canvas.height - 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label KM
+        ctx.fillStyle = '#718096';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${km} KM`, x, canvas.height - 5);
+      }
+
+      // Draw Lanes & Objects
+      selectedObjects.forEach((obj, index) => {
+        const laneY = startY + index * laneHeight;
+
+        // Draw Lane Line
+        ctx.beginPath();
+        ctx.strokeStyle = '#edf2f7';
+        ctx.lineWidth = 1;
+        ctx.moveTo(finishX, laneY + 15);
+        ctx.lineTo(startX, laneY + 15);
+        ctx.stroke();
+
+        // Calculate Position From Right (0 KM) to Left (10 KM)
+        const progress = Math.min(1.0, obj.distanceKm / TRACK_DISTANCE_KM);
+        const objX = startX - progress * trackLengthPx;
+
+        // Draw Icon/Shape
+        ctx.font = '20px sans-serif';
+        ctx.textAlign = 'center';
+
+        // Flip image horizontally so movement faces left
+        ctx.save();
+        ctx.translate(objX, laneY);
+        ctx.scale(-1, 1); 
+        ctx.fillText(obj.icon, 0, 0);
+        ctx.restore();
+
+        // Draw Label Name next to icon
+        ctx.fillStyle = obj.color;
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${obj.name}`, objX + 15, laneY - 2);
+      });
     }
 
-    function resetSimulation() {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      
-      progress = 0; // Mulai dari Ujung Kanan (0.00 km)
-      animStep = 0;
-      isRunning = true;
+    // Update Stats Table
+    function updateStatsTable() {
+      const tbody = document.getElementById('statsTableBody');
+      tbody.innerHTML = '';
 
-      update();
+      // Sort objects by distance travelled descending
+      const sorted = [...selectedObjects].sort((a, b) => b.distanceKm - a.distanceKm);
+
+      sorted.forEach((obj, idx) => {
+        const tr = document.createElement('tr');
+        
+        const modeLabel = obj.isLiving ? (obj.mode === 'run' ? 'Berlari' : 'Berjalan') : '-';
+        const statusLabel = obj.finished ? `<span style="color: green; font-weight: bold;">Selesai (${formatDuration(obj.finishTime)})</span>` : 'Bergerak...';
+
+        tr.innerHTML = `
+          <td><strong>${idx + 1}</strong></td>
+          <td>${obj.icon} ${obj.name}</td>
+          <td>${modeLabel}</td>
+          <td>${obj.currentSpeed} km/h</td>
+          <td>${obj.distanceKm.toFixed(2)} km</td>
+          <td>${formatDuration(obj.finished ? obj.finishTime : simTimeSeconds)}</td>
+          <td>${statusLabel}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    btnStart.addEventListener('click', resetSimulation);
+    function showResultModal() {
+      const modal = document.getElementById('resultModal');
+      const body = document.getElementById('modalBodyText');
 
-    render();
+      const winner = [...selectedObjects].sort((a, b) => a.finishTime - b.finishTime)[0];
+
+      body.innerHTML = `
+        <strong>Juara 1:</strong> ${winner.icon} ${winner.name}<br>
+        <strong>Waktu Tempuh:</strong> ${formatDuration(winner.finishTime)}<br>
+        <strong>Kecepatan Rata-rata:</strong> ${winner.currentSpeed} km/jam
+      `;
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('resultModal').style.display = 'none';
+    }
+
+    // Initialize Page
+    initObjectGrid();
   </script>
 </body>
 </html>
