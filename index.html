@@ -103,6 +103,7 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
 
+    // Element Kontrol & Status
     const trackSelect = document.getElementById('trackSelect');
     const objectSelect = document.getElementById('objectSelect');
     const btnStart = document.getElementById('btnStart');
@@ -110,229 +111,153 @@
     const speedText = document.getElementById('speedText');
     const staminaText = document.getElementById('staminaText');
 
-    let progress = 0;           
-    let totalDistanceKm = 0;    
-    let currentSpeed = 1;       
-    let stamina = 100;          
-    let maxDistance = Infinity; 
+    // Parameter Simulasi
+    let progress = 0;           // Posisi sepanjang lintasan (0.0 sampai 1.0)
+    let totalDistanceKm = 0;    // Jarak aktual yang telah ditempuh (km)
+    let currentSpeed = 1;       // Pengali kecepatan saat ini
+    let stamina = 100;          // Persentase stamina/bahan bakar (100% -> 0%)
+    let maxDistance = Infinity; // Batas lintasan (km)
     let isRunning = false;
     let animFrameId = null;
-    let animStep = 0;           
+    let animStep = 0;           // Variabel fase animasi (langkah kaki / putaran)
 
-    // Lintasan Bergerak dari KANAN (t=0) ke KIRI (t=1)
+    // Menghasilkan koordinat jalur bergelombang DARI KANAN KE KIRI
     function getPathPoint(t, offsetX = 0) {
+      // t = 0 -> Ujung Kanan (X = canvas.width)
+      // t = 1 -> Ujung Kiri (X = 0)
       const x = (1 - t) * canvas.width;
       const y = 200 + Math.sin(((1 - t) * 4 * Math.PI) + offsetX) * 60 + Math.cos((1 - t) * 2 * Math.PI) * 30;
       return { x, y };
     }
 
+    // Menggambar Lintasan
     function drawTrack(offsetX) {
       ctx.beginPath();
-      ctx.lineWidth = 14;
-      ctx.strokeStyle = '#8d6e63';
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#8d6e63'; // Warna jalan tanah/lintasan
       ctx.lineCap = 'round';
 
-      for (let i = 0; i <= 200; i++) {
-        const t = i / 200;
+      for (let i = 0; i <= 100; i++) {
+        const t = i / 100;
         const pt = getPathPoint(t, offsetX);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
 
+      // Garis tengah lintasan (putus-putus)
       ctx.beginPath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#fff';
       ctx.setLineDash([8, 8]);
-      for (let i = 0; i <= 200; i++) {
-        const t = i / 200;
+      for (let i = 0; i <= 100; i++) {
+        const t = i / 100;
         const pt = getPathPoint(t, offsetX);
         if (i === 0) ctx.moveTo(pt.x, pt.y);
         else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.setLineDash([]); // Reset garis
     }
 
+    // Menggambar Objek/Hewan/Kendaraan
     function drawObject(x, y, angle, type) {
       ctx.save();
       ctx.translate(x, y);
+      
+      // Rotasi sudut lintasan
       ctx.rotate(angle);
 
+      // Membalik arah muka gambar asli agar MENGHADAP KIRI
+      ctx.scale(-1, 1);
+
+      // Gambar Objek Berdasarkan Pilihan (Kode Asli Anda)
       if (type === 'kuda') {
-        const legPhase = animStep * 12;
-        const frontLeg1 = Math.sin(legPhase) * 0.6;
-        const frontLeg2 = Math.sin(legPhase + Math.PI) * 0.6;
-        const backLeg1 = Math.sin(legPhase + Math.PI * 0.5) * 0.6;
-        const backLeg2 = Math.sin(legPhase + Math.PI * 1.5) * 0.6;
-        const headBob = Math.sin(legPhase * 2) * 3;
+        const legSwing = Math.sin(animStep * 10) * 12;
+        const headBob = Math.cos(animStep * 10) * 3;
 
-        ctx.strokeStyle = '#3e2723';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(18, -8);
-        ctx.quadraticCurveTo(25, -2, 22 + Math.sin(legPhase) * 4, 8);
-        ctx.stroke();
-
-        const drawHorseLeg = (startX, startY, angleVal) => {
-          ctx.save();
-          ctx.translate(startX, startY);
-          ctx.rotate(angleVal);
-          ctx.fillStyle = '#4e342e';
-          ctx.fillRect(-2.5, 0, 5, 12);
-          ctx.fillStyle = '#212121';
-          ctx.fillRect(-2.5, 10, 5, 3);
-          ctx.restore();
-        };
-
-        drawHorseLeg(12, 5, backLeg1);
-        drawHorseLeg(6, 5, backLeg2);
-
+        // Badan Kuda
         ctx.fillStyle = '#6d4c41';
-        ctx.beginPath();
-        ctx.ellipse(0, -2, 20, 11, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.save();
-        ctx.translate(-14, -8 + headBob * 0.5);
-        ctx.rotate(-0.4);
-        ctx.fillRect(-6, -16, 10, 16);
+        ctx.fillRect(-20, -10, 35, 18);
         
-        ctx.beginPath();
-        ctx.ellipse(-8, -16, 10, 6, -0.2, 0, Math.PI * 2);
-        ctx.fill();
+        // Leher & Kepala
+        ctx.fillRect(10, -20 + headBob, 10, 15);
+        ctx.fillRect(12, -25 + headBob, 12, 8);
 
-        ctx.beginPath();
-        ctx.moveTo(-4, -20);
-        ctx.lineTo(-1, -25);
-        ctx.lineTo(-1, -20);
-        ctx.fill();
+        // Kaki-kaki beranimasi
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(-15 + legSwing * 0.5, 8, 5, 12);
+        ctx.fillRect(-8 - legSwing * 0.5, 8, 5, 12);
+        ctx.fillRect(2 - legSwing * 0.5, 8, 5, 12);
+        ctx.fillRect(9 + legSwing * 0.5, 8, 5, 12);
 
+        // Mata
         ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(-11, -17, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(-12, -17, 1, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        drawHorseLeg(-10, 5, frontLeg1);
-        drawHorseLeg(-16, 5, frontLeg2);
+        ctx.fillRect(20, -23 + headBob, 3, 3);
 
       } else if (type === 'manusia') {
-        const runPhase = animStep * 14;
-        const leg1Angle = Math.sin(runPhase) * 0.7;
-        const leg2Angle = Math.sin(runPhase + Math.PI) * 0.7;
-        const arm1Angle = Math.sin(runPhase + Math.PI) * 0.6;
-        const arm2Angle = Math.sin(runPhase) * 0.6;
+        const swing = Math.sin(animStep * 12) * 14;
 
+        // Kepala
+        ctx.fillStyle = '#e0a96d';
+        ctx.beginPath(); 
+        ctx.arc(0, -24, 6, 0, Math.PI * 2); 
+        ctx.fill();
+
+        // Badan
+        ctx.fillStyle = '#007bff';
+        ctx.fillRect(-5, -18, 10, 16);
+
+        // Kaki Beranimasi
+        ctx.strokeStyle = '#222';
         ctx.lineWidth = 3.5;
         ctx.lineCap = 'round';
 
-        ctx.save();
-        ctx.rotate(leg2Angle);
-        ctx.strokeStyle = '#333';
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-4, 12);
-        ctx.lineTo(-1, 22);
+        ctx.moveTo(-2, -2);
+        ctx.lineTo(-2 - swing, 12);
         ctx.stroke();
-        ctx.restore();
 
-        ctx.save();
-        ctx.translate(0, -16);
-        ctx.rotate(arm2Angle);
+        ctx.beginPath();
+        ctx.moveTo(2, -2);
+        ctx.lineTo(2 + swing, 12);
+        ctx.stroke();
+
+        // Tangan Beranimasi
         ctx.strokeStyle = '#e0a96d';
+        ctx.lineWidth = 2.5;
+
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-6, 8);
-        ctx.lineTo(-10, 14);
+        ctx.moveTo(-3, -14);
+        ctx.lineTo(-3 + swing * 0.8, -4);
         ctx.stroke();
-        ctx.restore();
-
-        ctx.save();
-        ctx.rotate(-0.15);
-        ctx.fillStyle = '#007bff';
-        ctx.fillRect(-5, -20, 10, 18);
-
-        ctx.fillStyle = '#e0a96d';
-        ctx.beginPath();
-        ctx.arc(-2, -26, 6, 0, Math.PI * 2);
-        ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(-7, -26, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        ctx.save();
-        ctx.rotate(leg1Angle);
-        ctx.strokeStyle = '#111';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-4, 12);
-        ctx.lineTo(-1, 22);
+        ctx.moveTo(3, -14);
+        ctx.lineTo(3 - swing * 0.8, -4);
         ctx.stroke();
-        ctx.restore();
-
-        ctx.save();
-        ctx.translate(0, -16);
-        ctx.rotate(arm1Angle);
-        ctx.strokeStyle = '#ffcc80';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-6, 8);
-        ctx.lineTo(-12, 12);
-        ctx.stroke();
-        ctx.restore();
 
       } else if (type === 'mobil') {
-        const wheelAngle = -animStep * 20;
-        const bounce = Math.sin(animStep * 30) * 1;
+        const wheelAngle = animStep * 15;
 
-        ctx.save();
-        ctx.translate(0, bounce);
-
+        // Bodi Mobil
         ctx.fillStyle = '#d32f2f';
-        ctx.fillRect(-24, -14, 48, 14);
-
+        ctx.fillRect(-22, -12, 44, 16);
         ctx.fillStyle = '#b71c1c';
-        ctx.beginPath();
-        ctx.moveTo(12, -14);
-        ctx.lineTo(4, -24);
-        ctx.lineTo(-12, -24);
-        ctx.lineTo(-18, -14);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillRect(-10, -22, 24, 10);
 
-        ctx.fillStyle = '#81d4fa';
-        ctx.beginPath();
-        ctx.moveTo(10, -15);
-        ctx.lineTo(3, -22);
-        ctx.lineTo(-10, -22);
-        ctx.lineTo(-15, -15);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#ffeb3b';
-        ctx.fillRect(-25, -11, 3, 5);
-
-        ctx.fillStyle = '#ff5252';
-        ctx.fillRect(23, -11, 2, 5);
-
+        // Roda Berputar
         const drawWheel = (wx, wy) => {
           ctx.save();
           ctx.translate(wx, wy);
           ctx.rotate(wheelAngle);
-
+          
           ctx.fillStyle = '#212121';
-          ctx.beginPath();
-          ctx.arc(0, 0, 6, 0, Math.PI * 2);
+          ctx.beginPath(); 
+          ctx.arc(0, 0, 6, 0, Math.PI * 2); 
           ctx.fill();
 
-          ctx.strokeStyle = '#eeeeee';
+          ctx.strokeStyle = '#fff';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(-5, 0); ctx.lineTo(5, 0);
@@ -342,32 +267,39 @@
           ctx.restore();
         };
 
-        drawWheel(-13, 0);
-        drawWheel(13, 0);
+        drawWheel(-12, 5);
+        drawWheel(12, 5);
 
-        ctx.restore();
+        // Lampu Depan
+        ctx.fillStyle = '#ffeb3b';
+        ctx.fillRect(20, -8, 3, 5);
       }
 
       ctx.restore();
     }
 
+    // Program Utama (Update & Render Loop)
     let infiniteOffset = 0;
 
     function update() {
       if (!isRunning) return;
 
+      // 1. Kalkulasi Faktor Daya Tahan / Melambat
       const decayRate = objectSelect.value === 'manusia' ? 0.08 : (objectSelect.value === 'kuda' ? 0.05 : 0.03);
-      stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100));
-      currentSpeed = stamina / 100;
+      stamina = Math.max(5, 100 - (totalDistanceKm * decayRate * 100)); 
+      currentSpeed = stamina / 100; 
 
-      const baseIncrement = 0.0025 * currentSpeed;
+      // 2. Laju Pergerakan (Kanan ke Kiri)
+      const baseIncrement = 0.002 * currentSpeed;
       animStep += baseIncrement * 10;
 
       if (maxDistance === Infinity) {
+        // MODE TAK BERBATAS
         totalDistanceKm += baseIncrement * 5;
-        infiniteOffset += baseIncrement * 4;
+        infiniteOffset += baseIncrement * 4; 
         progress = 0.5;
       } else {
+        // MODE LINTASAN TERBATAS (1, 5, 10 km)
         progress += baseIncrement;
         totalDistanceKm = progress * maxDistance;
 
@@ -382,10 +314,12 @@
         }
       }
 
+      // Update Panel Informasi
       distText.innerText = totalDistanceKm.toFixed(2);
       speedText.innerText = Math.round(currentSpeed * 100);
       staminaText.innerText = Math.round(stamina);
 
+      // Render Visual
       render();
 
       if (isRunning) {
@@ -396,24 +330,28 @@
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Gambar Lintasan
       drawTrack(infiniteOffset);
 
+      // Hitung Posisi Objek & Derivatif Vektor Arah (Kanan ke Kiri)
       const pt1 = getPathPoint(progress, infiniteOffset);
-      const pt2 = getPathPoint(progress + 0.005, infiniteOffset);
+      const pt2 = getPathPoint(progress + 0.01, infiniteOffset);
 
       const dx = pt2.x - pt1.x;
       const dy = pt2.y - pt1.y;
-      const angle = Math.atan2(dy, dx);
+      const angle = Math.atan2(dy, dx); 
 
+      // Gambar Objek
       drawObject(pt1.x, pt1.y, angle, objectSelect.value);
     }
 
+    // Reset Simulasi
     function resetSimulation() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
-
+      
       const selectedTrack = trackSelect.value;
       maxDistance = selectedTrack === 'infinite' ? Infinity : parseFloat(selectedTrack);
-
+      
       progress = maxDistance === Infinity ? 0.5 : 0;
       totalDistanceKm = 0;
       stamina = 100;
@@ -427,6 +365,7 @@
 
     btnStart.addEventListener('click', resetSimulation);
 
+    // Render Awal
     render();
   </script>
 </body>
